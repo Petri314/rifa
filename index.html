@@ -1,394 +1,425 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rifa Digital 1-100 (Tiempo Real)</title>
-    <!-- Carga de Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* Estilos personalizados para la paleta de colores y responsividad */
-        :root {
-            --color-blue-deep: #1e90ff; /* Azul profundo */
-            --color-gold-accent: #ffd700; /* Dorado para acentos */
-            --color-green-available: #d0f0c0; /* Verde claro disponible */
-            --color-red-occupied: #ff6666; /* Rojo ocupado */
-            --color-bg-light: #f0f8ff; /* Fondo azul muy claro */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--color-bg-light);
-            min-height: 100vh;
-        }
-        .raffle-number {
-            height: 100%;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .raffle-number:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-        }
-        /* Colores de estado */
-        .available {
-            background-color: var(--color-green-available);
-            color: #1e403d; /* Texto oscuro para contraste */
-        }
-        .occupied {
-            background-color: var(--color-red-occupied);
-            color: #ffffff;
-            cursor: default;
-        }
-        /* Contenedor principal de la cuadrícula */
-        #raffle-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr); /* 5 columnas en móvil */
-            gap: 8px;
-        }
-        @media (min-width: 768px) {
-            #raffle-grid {
-                grid-template-columns: repeat(10, 1fr); /* 10 columnas en escritorio */
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gran Rifa Amaruki — 100 Números</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#121a33; --muted:#7f8db2; --accent:#3ad1a1; --accent-2:#2bb3ff; --danger:#ff5c7a; --gold:#f3c969;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(80vw 80vh at 10% 10%,#0f1835,#090e1e) fixed;color:#e6ecff}
+    header{padding:18px 18px 0}
+    .container{max-width:1200px;margin:0 auto;padding:18px}
+    .app{display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px}
+    @media (max-width:980px){.app{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg, rgba(18,26,51,0.9), rgba(10,15,30,0.9));border:1px solid rgba(255,255,255,0.08);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.35)}
+    .card h2{margin:0 0 12px;font-size:20px;letter-spacing:0.2px}
+    .header-card{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0}
+    .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;padding:16px}
+    @media (max-width:520px){.grid{grid-template-columns:repeat(5,1fr)}}
+    .num{position:relative;isolation:isolate;border-radius:12px;padding:14px 0;text-align:center;font-weight:700;cursor:pointer;user-select:none;border:1px solid rgba(255,255,255,0.08);transition:transform .08s ease, box-shadow .2s ease, border-color .2s ease}
+    .num.available{background:linear-gradient(180deg,rgba(46,214,175,0.12),rgba(46,214,175,0.05));color:#d9fff5}
+    .num.available:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(58,209,161,0.25);border-color:rgba(58,209,161,0.55)}
+    .num.taken{background:linear-gradient(180deg,rgba(255,92,122,0.18),rgba(255,92,122,0.06));color:#ffe6ec;border-color:rgba(255,92,122,0.45)}
+    .num .alias{position:absolute;inset:auto 6px 6px 6px;font-size:10px;color:#ffdfe6;opacity:.85;line-height:1.1}
+
+    .panel{padding:16px;display:flex;flex-direction:column;gap:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    input,select,button,textarea{border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:#0c1226;color:#eaf2ff;padding:12px 14px;font-size:14px;outline:none}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(43,179,255,0.18)}
+    button{cursor:pointer;border:none;background:linear-gradient(90deg,var(--accent-2),var(--accent));font-weight:700;color:#05121c}
+    button.secondary{background:transparent;color:#dfe8ff;border:1px solid rgba(255,255,255,0.18)}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);font-size:13px;color:#d9e3ff}
+
+    .list{max-height:320px;overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.08)}
+    .row-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px dashed rgba(255,255,255,0.08)}
+    .row-item:last-child{border-bottom:none}
+    .row-item b{letter-spacing:.3px}
+    .muted{color:var(--muted)}
+
+    .prizes{display:grid;grid-template-columns:1fr;gap:8px}
+    .footer-note{font-size:12px;color:var(--muted)}
+    .tag{font-size:12px;padding:6px 8px;border-radius:10px;background:rgba(243,201,105,0.12);border:1px solid rgba(243,201,105,0.4);color:#ffe8b0}
+    .tiny{font-size:12px;color:var(--muted)}
+
+    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent);margin:4px 0}
+  </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
+  <header class="container">
+    <h1 style="margin:0;font-size:28px;letter-spacing:.3px">🎉 Gran Rifa Amaruki — 100 Números <span class="tag">Tiempo real</span></h1>
+    <p class="tiny">Comparte esta página para que todos vean y reserven números. Con Firebase activado, los cambios aparecen para todos los usuarios al instante.</p>
+  </header>
 
-    <header class="text-center mb-8">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">
-            <span class="text-yellow-500">🏆</span> Rifa de los 100 Números <span class="text-blue-600">🎉</span>
-        </h1>
-        <p class="text-lg text-gray-600 mt-2">¡Selecciona tu número de la suerte!</p>
-    </header>
-
-    <!-- Contenedor Principal: Panel y Grid -->
-    <main class="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
-
-        <!-- Panel Lateral/Superior de Control y Estadísticas -->
-        <div id="sidebar" class="md:w-1/3 p-6 bg-white rounded-xl shadow-lg order-2 md:order-1 sticky top-8 h-fit">
-            <h2 class="text-2xl font-bold mb-4 border-b pb-2 text-blue-600">Panel de Rifa</h2>
-
-            <!-- Contador de Disponibles -->
-            <div class="bg-blue-100 p-4 rounded-lg mb-4 flex justify-between items-center shadow-inner">
-                <span class="font-semibold text-gray-700">Números Disponibles:</span>
-                <span id="available-count" class="text-3xl font-extrabold text-blue-700">100</span>
-            </div>
-
-            <!-- Botón de Reinicio -->
-            <button id="reset-raffle-btn" class="w-full py-3 mb-6 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition shadow-md">
-                Reiniciar Rifa (Nueva Rifa)
-            </button>
-            
-            <!-- Indicador de Usuario y Estado -->
-            <div class="text-sm text-gray-500 mb-4 border-t pt-4">
-                <p>ID de Sesión (Tu ID): <span id="user-id-display" class="font-mono text-xs break-all text-gray-700">Cargando...</span></p>
-                <p id="loading-indicator" class="text-orange-500 mt-2 font-semibold">Conectando a la base de datos...</p>
-            </div>
-
-
-            <!-- Lista de Participantes -->
-            <h3 class="text-xl font-bold mt-4 mb-3 text-gray-800">Lista de Participantes</h3>
-            <div id="participants-list-container" class="max-h-96 overflow-y-auto pr-2">
-                <ul id="participants-list" class="space-y-2">
-                    <li class="text-gray-500">Aún no hay números seleccionados.</li>
-                </ul>
-            </div>
+  <main class="container app">
+    <section class="card">
+      <div class="header-card">
+        <h2>Selecciona un número</h2>
+        <div class="meta">
+          <span class="pill">Disponibles: <b id="availableCount">100</b></span>
+          <span class="pill">Reservados: <b id="takenCount">0</b></span>
         </div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
 
-        <!-- Cuadrícula de Números -->
-        <div class="md:w-2/3 order-1 md:order-2">
-            <div id="raffle-grid" class="p-4 bg-white rounded-xl shadow-lg">
-                <!-- Los números se renderizarán aquí -->
-            </div>
+    <aside class="card">
+      <div class="panel">
+        <h2>Panel de control</h2>
+        <div class="row">
+          <input id="alias" placeholder="Tu nombre o alias" style="flex:1" />
+          <button id="btnQuick">Reservar seleccionado</button>
         </div>
+        <div class="row">
+          <input id="search" placeholder="Buscar por alias o número…" style="flex:1" />
+          <button class="secondary" id="btnExport" title="Exportar CSV">Exportar CSV</button>
+        </div>
+        <div class="divider"></div>
 
-    </main>
-    
-    <!-- Recuadro de Premios -->
-    <div class="max-w-7xl mx-auto mt-12 mb-8 p-6 bg-yellow-50 border-t-4 border-yellow-400 rounded-xl shadow-xl">
-        <h2 class="text-3xl font-extrabold text-yellow-700 mb-4 flex items-center">
-            🏆 Premios de la Rifa:
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-700 font-semibold">
-            <p class="p-3 bg-yellow-100 rounded-lg">1° Premio: <span class="text-yellow-900">[**Bicicleta de Montaña**]</span></p>
-            <p class="p-3 bg-yellow-100 rounded-lg">2° Premio: <span class="text-yellow-900">[**Consola de Videojuegos**]</span></p>
-            <p class="p-3 bg-yellow-100 rounded-lg">3° Premio: <span class="text-yellow-900">[**Cesta de Productos Gourmet**]</span></p>
+        <div class="list" id="list"></div>
+
+        <div class="divider"></div>
+        <div>
+          <h3 style="margin:8px 0 6px">🏆 Premios de la Rifa</h3>
+          <div class="prizes">
+            <input id="prize1" placeholder="1° Premio: escribe aquí" />
+            <input id="prize2" placeholder="2° Premio: escribe aquí" />
+            <input id="prize3" placeholder="3° Premio: escribe aquí" />
+          </div>
         </div>
+        <div class="divider"></div>
+        <div class="row">
+          <button id="btnReset" class="secondary" title="Borrar todo">Nueva rifa</button>
+          <button id="btnRelease" class="secondary" title="Liberar número" style="margin-left:auto">Liberar #…</button>
+        </div>
+        <p class="footer-note">Consejo: escribe tu alias y luego toca un número disponible para reservarlo. Para liberar uno, usa el botón “Liberar #…”.</p>
+
+        <details>
+          <summary class="tiny">⚙️ Ajustes de sincronización (opcional Firebase)</summary>
+          <div class="row" style="margin-top:8px">
+            <label class="tiny" style="flex:1 1 100%">Pega tu config de Firebase (Realtime Database)</label>
+            <textarea id="firebaseConfig" rows="6" placeholder='{
+  "apiKey": "…",
+  "authDomain": "…",
+  "databaseURL": "https://tu-db.europe-west1.firebasedatabase.app",
+  "projectId": "…",
+  "storageBucket": "…",
+  "messagingSenderId": "…",
+  "appId": "…"
+}'></textarea>
+            <button id="btnEnableFb">Habilitar Firebase</button>
+          </div>
+          <p class="tiny">Sin Firebase, la rifa funciona localmente (en este navegador) y puede compartirse exportando/importando un CSV. Con Firebase, todos los usuarios ven los cambios en tiempo real.</p>
+        </details>
+      </div>
+    </aside>
+  </main>
+
+  <template id="tpl-item">
+    <div class="row-item">
+      <div>
+        <b>#<span class="no"></span></b>
+        <span class="muted">—</span>
+        <span class="alias-text"></span>
+      </div>
+      <div class="row">
+        <button class="secondary btn-free" style="padding:6px 10px">Liberar</button>
+      </div>
     </div>
+  </template>
 
+  <script>
+    // ============================
+    //  Configuración básica
+    // ============================
+    const TOTAL = 100;
 
-    <!-- Contenedor para la lógica de Firebase y la aplicación -->
-    <script type="module">
-        // Importaciones de Firebase (Necesarias para la funcionalidad de tiempo real)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, doc, setDoc, onSnapshot, collection, runTransaction 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    // Estado en memoria
+    const state = {
+      // numbers: { 1: {alias:""} | null }
+      numbers: {},
+      prizes: { p1:"", p2:"", p3:"" },
+      aliasDraft: "",
+      selectedNumber: null,
+      backend: "local", // "local" | "firebase"
+      fb: { app: null, db: null, ref: null }
+    };
 
-        // =======================================================
-        // 1. Configuración de Firebase y Autenticación
-        // =======================================================
+    const els = {
+      grid: document.getElementById('grid'),
+      list: document.getElementById('list'),
+      availableCount: document.getElementById('availableCount'),
+      takenCount: document.getElementById('takenCount'),
+      alias: document.getElementById('alias'),
+      btnQuick: document.getElementById('btnQuick'),
+      search: document.getElementById('search'),
+      btnExport: document.getElementById('btnExport'),
+      btnReset: document.getElementById('btnReset'),
+      btnRelease: document.getElementById('btnRelease'),
+      prize1: document.getElementById('prize1'),
+      prize2: document.getElementById('prize2'),
+      prize3: document.getElementById('prize3'),
+      fbCfg: document.getElementById('firebaseConfig'),
+      btnEnableFb: document.getElementById('btnEnableFb'),
+      tplItem: document.getElementById('tpl-item')
+    };
 
-        const RAFFLE_COLLECTION = 'raffle_numbers';
-        const RAFFLE_DOC_ID = 'raffle_state';
-        
-        let db;
-        let auth;
-        let userId = 'loading';
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-raffle-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    // ============================
+    //  Persistencia (adaptador)
+    // ============================
+    const storageKey = 'rifa100_v1';
 
-        /**
-         * Inicializa Firebase, autentica al usuario y comienza a escuchar la base de datos.
-         */
-        async function initializeFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+    const LocalAdapter = {
+      load(){
+        try{
+          const raw = localStorage.getItem(storageKey);
+          if(!raw) return null;
+          return JSON.parse(raw);
+        }catch(e){ console.warn('No se pudo leer localStorage', e); return null; }
+      },
+      save(snapshot){
+        try{
+          localStorage.setItem(storageKey, JSON.stringify(snapshot));
+        }catch(e){ console.warn('No se pudo guardar localStorage', e); }
+      },
+      subscribe(){ /* local no tiene realtime */ return () => {}; }
+    };
 
-                // Autenticación: usar token personalizado o iniciar sesión de forma anónima
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+    let FirebaseAdapter = {
+      async enableFromConfigJson(jsonString){
+        try{
+          const cfg = JSON.parse(jsonString);
+          await ensureFirebase();
+          const app = window.firebase.initializeApp(cfg);
+          const db = window.firebase.database();
+          const ref = db.ref('rifa100/default');
+          state.backend = 'firebase';
+          state.fb = { app, db, ref };
 
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                document.getElementById('user-id-display').textContent = userId;
-                document.getElementById('loading-indicator').textContent = 'Conectado. ¡Buena suerte!';
-                document.getElementById('loading-indicator').classList.replace('text-orange-500', 'text-green-600');
-                
-                // 2. Comienza a escuchar los cambios en la base de datos
-                listenToRaffleState();
-
-            } catch (error) {
-                console.error("Error al inicializar Firebase o autenticar:", error);
-                document.getElementById('loading-indicator').textContent = 'Error de conexión. Intenta recargar.';
-                document.getElementById('loading-indicator').classList.replace('text-orange-500', 'text-red-600');
+          // Si no existe datos, inicialízalos
+          ref.child('snapshot').get().then(snap=>{
+            if(!snap.exists()){
+              const init = buildSnapshot();
+              ref.child('snapshot').set(init);
             }
-        }
+          });
 
-        /**
-         * Genera la ruta de Firestore para datos públicos de esta aplicación.
-         */
-        function getRaffleDocRef() {
-            const path = `/artifacts/${appId}/public/data/${RAFFLE_COLLECTION}`;
-            return doc(collection(db, path), RAFFLE_DOC_ID);
-        }
-
-        // =======================================================
-        // 2. Lógica de Estado y Real-Time
-        // =======================================================
-        
-        const NUM_COUNT = 100;
-        let currentRaffleState = {};
-        
-        /**
-         * Genera el estado inicial de la rifa (todos disponibles).
-         */
-        function generateInitialState() {
-            const numbers = {};
-            for (let i = 1; i <= NUM_COUNT; i++) {
-                numbers[i] = {
-                    number: i,
-                    occupied: false,
-                    participant: null,
-                    userId: null
-                };
+          // Suscripción realtime
+          ref.child('snapshot').on('value', (snap)=>{
+            if(snap.exists()){
+              applySnapshot(snap.val(), {silentSave:true});
             }
-            return { 
-                numbers: numbers,
-                availableCount: NUM_COUNT
-            };
+          });
+
+          // Guardar premios y alias en otro nodo para no sobreescribir
+          watchPrizeInputs((prz)=> ref.child('snapshot/prizes').set(prz));
+
+          return true;
+        }catch(e){ alert('No se pudo habilitar Firebase. Revisa el JSON.\n'+e); return false; }
+      },
+      save(snapshot){
+        if(state.backend!=='firebase' || !state.fb.ref) return;
+        state.fb.ref.child('snapshot').set(snapshot);
+      },
+      subscribe(){ /* ya se hace al habilitar */ return () => {}; }
+    };
+
+    // Cargar SDK Firebase si hace falta
+    async function ensureFirebase(){
+      if(window.firebase) return;
+      await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js');
+    }
+
+    function loadScript(src){
+      return new Promise((res,rej)=>{
+        const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+      });
+    }
+
+    // ============================
+    //  Lógica de la App
+    // ============================
+    function buildSnapshot(){
+      const numbers = {}; for(let i=1;i<=TOTAL;i++) numbers[i]=null;
+      return { numbers, prizes: {...state.prizes} };
+    }
+
+    function applySnapshot(snap, opts={}){
+      state.numbers = snap.numbers || {};
+      state.prizes = snap.prizes || {p1:"",p2:"",p3:""};
+      renderAll();
+      if(!opts.silentSave){ persist(); }
+    }
+
+    function persist(){
+      const snapshot = { numbers: state.numbers, prizes: state.prizes };
+      if(state.backend==='firebase') FirebaseAdapter.save(snapshot);
+      else LocalAdapter.save(snapshot);
+    }
+
+    function initFromStorage(){
+      const data = LocalAdapter.load();
+      if(data){ applySnapshot(data,{silentSave:true}); }
+      else{ applySnapshot(buildSnapshot(),{silentSave:true}); }
+    }
+
+    // ============================
+    //  Render
+    // ============================
+    function renderAll(){
+      renderGrid();
+      renderList();
+      renderCounts();
+      els.prize1.value = state.prizes.p1 || '';
+      els.prize2.value = state.prizes.p2 || '';
+      els.prize3.value = state.prizes.p3 || '';
+    }
+
+    function renderCounts(){
+      let taken = Object.values(state.numbers).filter(v=>v).length;
+      els.takenCount.textContent = taken;
+      els.availableCount.textContent = TOTAL - taken;
+    }
+
+    function renderGrid(){
+      els.grid.innerHTML = '';
+      const term = (els.search.value||'').trim().toLowerCase();
+      for(let i=1;i<=TOTAL;i++){
+        const v = state.numbers[i];
+        const el = document.createElement('div');
+        el.className = 'num ' + (v? 'taken':'available');
+        el.dataset.no = i;
+        el.innerHTML = `${i}<div class="alias">${v?escapeHtml(v.alias):''}</div>`;
+        if(term){
+          const match = (''+i).includes(term) || (v && v.alias.toLowerCase().includes(term));
+          el.style.opacity = match? '1':'0.35';
         }
+        el.onclick = ()=> onNumberClick(i);
+        els.grid.appendChild(el);
+      }
+    }
 
-        /**
-         * Configura el listener de tiempo real (onSnapshot) de Firestore.
-         */
-        function listenToRaffleState() {
-            const docRef = getRaffleDocRef();
-            
-            onSnapshot(docRef, (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    currentRaffleState = docSnapshot.data();
-                } else {
-                    // Si el documento no existe (primera vez o después de un reset), créalo.
-                    currentRaffleState = generateInitialState();
-                    setDoc(docRef, currentRaffleState).catch(console.error);
-                }
-                // Actualiza la UI con el nuevo estado
-                renderRaffleUI(currentRaffleState);
-            }, (error) => {
-                console.error("Error al escuchar cambios en Firestore:", error);
-            });
+    function renderList(){
+      els.list.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      const entries = Object.entries(state.numbers).filter(([n,v])=>!!v).sort((a,b)=>a[0]-b[0]);
+      for(const [no,obj] of entries){
+        const node = els.tplItem.content.firstElementChild.cloneNode(true);
+        node.querySelector('.no').textContent = no;
+        node.querySelector('.alias-text').textContent = obj.alias;
+        node.querySelector('.btn-free').onclick = ()=> releaseNumber(parseInt(no));
+        frag.appendChild(node);
+      }
+      els.list.appendChild(frag);
+    }
+
+    // ============================
+    //  Acciones
+    // ============================
+    function onNumberClick(no){
+      state.selectedNumber = no;
+      const current = state.numbers[no];
+      if(current){
+        if(confirm(`El número #${no} está reservado por "${current.alias}". ¿Liberarlo?`)){
+          releaseNumber(no);
         }
+        return;
+      }
+      const alias = (els.alias.value||'').trim();
+      if(!alias){
+        alert('Escribe tu nombre o alias en el campo superior.');
+        els.alias.focus();
+        return;
+      }
+      reserveNumber(no, alias);
+    }
 
-        // =======================================================
-        // 3. Renderizado de la UI
-        // =======================================================
+    function reserveNumber(no, alias){
+      if(state.numbers[no]) return;
+      state.numbers[no] = { alias };
+      renderAll();
+      persist();
+    }
 
-        const gridElement = document.getElementById('raffle-grid');
-        const countElement = document.getElementById('available-count');
-        const listElement = document.getElementById('participants-list');
-        
-        /**
-         * Renderiza la cuadrícula de números y el panel de control.
-         */
-        function renderRaffleUI(state) {
-            if (!state || !state.numbers) return;
-            
-            const numbers = Object.values(state.numbers).sort((a, b) => a.number - b.number);
-            const availableCount = numbers.filter(n => !n.occupied).length;
-            countElement.textContent = availableCount;
+    function releaseNumber(no){
+      if(!state.numbers[no]) return;
+      state.numbers[no] = null;
+      renderAll();
+      persist();
+    }
 
-            gridElement.innerHTML = '';
-            listElement.innerHTML = '';
-            const participants = [];
+    function exportCSV(){
+      const rows = [["numero","alias"], ...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n, v.alias])];
+      const csv = rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'rifa_amaruki.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
 
-            numbers.forEach(item => {
-                const isOccupied = item.occupied;
-                const numberDiv = document.createElement('div');
-                numberDiv.className = `raffle-number h-12 text-lg ${isOccupied ? 'occupied' : 'available'}`;
-                numberDiv.textContent = item.number;
-                numberDiv.setAttribute('data-number', item.number);
-                
-                if (!isOccupied) {
-                    numberDiv.onclick = () => handleNumberClick(item.number);
-                }
+    function watchPrizeInputs(onChange){
+      const update = ()=>{
+        state.prizes = { p1: els.prize1.value.trim(), p2: els.prize2.value.trim(), p3: els.prize3.value.trim() };
+        if(onChange) onChange(state.prizes);
+        persist();
+      };
+      ['input','change'].forEach(ev=>{
+        els.prize1.addEventListener(ev, update);
+        els.prize2.addEventListener(ev, update);
+        els.prize3.addEventListener(ev, update);
+      });
+      // llamada inicial
+      update();
+    }
 
-                gridElement.appendChild(numberDiv);
+    // ============================
+    //  Utilidades
+    // ============================
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    }
 
-                if (isOccupied) {
-                    participants.push(item);
-                }
-            });
+    // ============================
+    //  Eventos UI
+    // ============================
+    els.btnQuick.onclick = ()=>{
+      if(state.selectedNumber==null){ alert('Primero toca un número disponible.'); return; }
+      const alias = (els.alias.value||'').trim();
+      if(!alias){ alert('Escribe tu nombre o alias.'); els.alias.focus(); return; }
+      if(state.numbers[state.selectedNumber]){ alert('Ese número ya está reservado.'); return; }
+      reserveNumber(state.selectedNumber, alias);
+    };
 
-            // Renderizar la lista de participantes
-            if (participants.length === 0) {
-                listElement.innerHTML = '<li class="text-gray-500">Aún no hay números seleccionados.</li>';
-            } else {
-                participants.sort((a, b) => a.number - b.number);
-                participants.forEach(p => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'flex justify-between items-center p-2 bg-gray-50 rounded-lg shadow-sm';
-                    listItem.innerHTML = `
-                        <span class="font-bold text-blue-600">${p.number}</span>
-                        <span class="text-sm font-medium text-gray-700">${p.participant}</span>
-                    `;
-                    listElement.appendChild(listItem);
-                });
-            }
-        }
+    els.btnExport.onclick = exportCSV;
+    els.search.addEventListener('input', ()=>{ renderGrid(); renderList(); });
 
-        // =======================================================
-        // 4. Funciones de Interacción y Transacción
-        // =======================================================
+    els.btnReset.onclick = ()=>{
+      if(!confirm('Esto borrará todos los datos locales de esta rifa. ¿Continuar?')) return;
+      applySnapshot(buildSnapshot());
+    };
 
-        /**
-         * Maneja el click en un número disponible.
-         */
-        function handleNumberClick(number) {
-            // Utilizamos un input personalizado en lugar de prompt()
-            const name = prompt("¡Introduce tu nombre o alias para el número " + number + "!");
-            
-            if (name && name.trim()) {
-                selectNumber(number, name.trim());
-            } else {
-                // Notificación simple en caso de que el usuario cancele o no introduzca nada
-                console.log("Selección cancelada o nombre no proporcionado.");
-            }
-        }
+    els.btnRelease.onclick = ()=>{
+      const raw = prompt('Ingresa el número a liberar (1-100):');
+      if(!raw) return; const no = parseInt(raw,10); if(isNaN(no)||no<1||no>100){ alert('Número inválido'); return; }
+      if(!state.numbers[no]){ alert('Ese número ya está libre.'); return; }
+      releaseNumber(no);
+    };
 
-        /**
-         * Ejecuta una transacción para marcar un número como ocupado.
-         */
-        async function selectNumber(number, participantName) {
-            const docRef = getRaffleDocRef();
-            const numberKey = number.toString();
-            
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const docSnapshot = await transaction.get(docRef);
-                    let state;
+    els.btnEnableFb.onclick = async ()=>{
+      const json = els.fbCfg.value.trim();
+      if(!json){ alert('Pega el JSON de configuración de Firebase.'); return; }
+      const ok = await FirebaseAdapter.enableFromConfigJson(json);
+      if(ok) alert('Firebase habilitado. ¡Sincronización en tiempo real activa!');
+    };
 
-                    if (!docSnapshot.exists()) {
-                        // Si el documento se borró justo antes, inicializa
-                        state = generateInitialState();
-                    } else {
-                        state = docSnapshot.data();
-                    }
-
-                    // Prevenir doble selección
-                    if (state.numbers[numberKey] && state.numbers[numberKey].occupied) {
-                        alert("¡Este número acaba de ser seleccionado por otro participante! Elige otro.");
-                        return Promise.reject("Número ya ocupado"); // Rechazar la transacción
-                    }
-
-                    // Actualizar el estado
-                    if (state.numbers[numberKey]) {
-                        state.numbers[numberKey] = {
-                            number: number,
-                            occupied: true,
-                            participant: participantName,
-                            userId: userId
-                        };
-                        state.availableCount = Object.values(state.numbers).filter(n => !n.occupied).length;
-
-                        // Guardar la actualización
-                        transaction.set(docRef, state);
-                    }
-                });
-                console.log(`Número ${number} seleccionado por ${participantName}.`);
-            } catch (e) {
-                console.error("Fallo en la transacción de selección:", e);
-                // Si el error no es el rechazo de "Número ya ocupado", mostrar un mensaje general.
-                if (e !== "Número ya ocupado") {
-                    alert("Hubo un error al intentar seleccionar el número. Revisa la consola.");
-                }
-            }
-        }
-
-        /**
-         * Reinicia completamente la rifa.
-         */
-        async function resetRaffle() {
-            if (!confirm('¿Estás seguro de que quieres REINICIAR completamente la rifa? Esto borrará todos los números seleccionados.')) {
-                return;
-            }
-
-            const docRef = getRaffleDocRef();
-            const initialState = generateInitialState();
-
-            try {
-                await setDoc(docRef, initialState);
-                alert("¡Rifa reiniciada con éxito! Todos los números están disponibles nuevamente.");
-            } catch (error) {
-                console.error("Error al reiniciar la rifa:", error);
-                alert("No se pudo reiniciar la rifa. Revisa la consola para más detalles.");
-            }
-        }
-
-        // =======================================================
-        // 5. Inicialización
-        // =======================================================
-
-        document.getElementById('reset-raffle-btn').onclick = resetRaffle;
-        
-        // Inicializar la aplicación cuando la página esté lista
-        window.onload = initializeFirebase;
-
-    </script>
+    // Iniciar y enlazar premios
+    initFromStorage();
+    watchPrizeInputs();
+  </script>
 </body>
 </html>
