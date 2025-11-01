@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gran Rifa Amaruki — 100 Números</title>
+  <title>Gran Rifa Amaruki — 100 Números (con login)</title>
   <style>
     :root{
       --bg:#0b1020; --card:#121a33; --muted:#7f8db2; --accent:#3ad1a1; --accent-2:#2bb3ff; --danger:#ff5c7a; --gold:#f3c969;
@@ -46,12 +46,16 @@
     .tiny{font-size:12px;color:var(--muted)}
 
     .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent);margin:4px 0}
+
+    .auth{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .auth .user{display:flex;align-items:center;gap:8px}
+    .avatar{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);object-fit:cover}
   </style>
 </head>
 <body>
   <header class="container">
-    <h1 style="margin:0;font-size:28px;letter-spacing:.3px">🎉 Gran Rifa Amaruki — 100 Números <span class="tag">Tiempo real</span></h1>
-    <p class="tiny">Comparte esta página para que todos vean y reserven números. Con Firebase activado, los cambios aparecen para todos los usuarios al instante.</p>
+    <h1 style="margin:0;font-size:28px;letter-spacing:.3px">🎉 Gran Rifa Amaruki — 100 Números <span class="tag">Login + Tiempo real</span></h1>
+    <p class="tiny">Necesitas iniciar sesión para reservar números. Con Firebase activado, los cambios aparecen para todos los usuarios al instante.</p>
   </header>
 
   <main class="container app">
@@ -69,8 +73,33 @@
     <aside class="card">
       <div class="panel">
         <h2>Panel de control</h2>
+
+        <div class="auth">
+          <div class="user" id="userBox" style="display:none">
+            <img id="userPhoto" class="avatar" alt=""/>
+            <div>
+              <div id="userName" style="font-weight:700"></div>
+              <div id="userEmail" class="tiny"></div>
+            </div>
+          </div>
+          <div id="authBox">
+            <div class="row">
+              <input id="email" placeholder="correo@ejemplo.com" style="flex:1"/>
+              <input id="password" type="password" placeholder="Contraseña" style="flex:1"/>
+            </div>
+            <div class="row">
+              <button id="btnLogin">Entrar</button>
+              <button class="secondary" id="btnRegister">Crear cuenta</button>
+              <button class="secondary" id="btnGoogle">Google</button>
+            </div>
+          </div>
+          <button id="btnLogout" class="secondary" style="margin-left:auto;display:none">Salir</button>
+        </div>
+
+        <div class="divider"></div>
+
         <div class="row">
-          <input id="alias" placeholder="Tu nombre o alias" style="flex:1" />
+          <input id="alias" placeholder="Tu alias visible (se precarga con tu nombre)" style="flex:1" />
           <button id="btnQuick">Reservar seleccionado</button>
         </div>
         <div class="row">
@@ -89,18 +118,19 @@
             <input id="prize2" placeholder="2° Premio: escribe aquí" />
             <input id="prize3" placeholder="3° Premio: escribe aquí" />
           </div>
+          <p class="tiny">Solo administradores pueden editar premios cuando hay login.</p>
         </div>
         <div class="divider"></div>
         <div class="row">
           <button id="btnReset" class="secondary" title="Borrar todo">Nueva rifa</button>
           <button id="btnRelease" class="secondary" title="Liberar número" style="margin-left:auto">Liberar #…</button>
         </div>
-        <p class="footer-note">Consejo: escribe tu alias y luego toca un número disponible para reservarlo. Para liberar uno, usa el botón “Liberar #…”.</p>
+        <p class="footer-note">Consejo: inicia sesión, escribe tu alias y luego toca un número disponible para reservarlo. Solo el dueño puede liberar su número (o un administrador).</p>
 
         <details>
-          <summary class="tiny">⚙️ Ajustes de sincronización (opcional Firebase)</summary>
+          <summary class="tiny">⚙️ Ajustes de sincronización (Firebase)</summary>
           <div class="row" style="margin-top:8px">
-            <label class="tiny" style="flex:1 1 100%">Pega tu config de Firebase (Realtime Database)</label>
+            <label class="tiny" style="flex:1 1 100%">Pega tu config de Firebase (Realtime Database + Auth)</label>
             <textarea id="firebaseConfig" rows="6" placeholder='{
   "apiKey": "…",
   "authDomain": "…",
@@ -112,7 +142,7 @@
 }'></textarea>
             <button id="btnEnableFb">Habilitar Firebase</button>
           </div>
-          <p class="tiny">Sin Firebase, la rifa funciona localmente (en este navegador) y puede compartirse exportando/importando un CSV. Con Firebase, todos los usuarios ven los cambios en tiempo real.</p>
+          <p class="tiny">Con Firebase activo, la app requiere login para reservar/liberar. Puedes usar Email/Password o Google.</p>
         </details>
       </div>
     </aside>
@@ -124,6 +154,7 @@
         <b>#<span class="no"></span></b>
         <span class="muted">—</span>
         <span class="alias-text"></span>
+        <span class="tiny" style="margin-left:6px;opacity:.8">(<span class="owner"></span>)</span>
       </div>
       <div class="row">
         <button class="secondary btn-free" style="padding:6px 10px">Liberar</button>
@@ -136,16 +167,19 @@
     //  Configuración básica
     // ============================
     const TOTAL = 100;
+    const ADMIN_EMAILS = [
+      // Agrega aquí correos de administradores
+      // "tucorreo@dominio.com"
+    ];
 
-    // Estado en memoria
+    // Estado
     const state = {
-      // numbers: { 1: {alias:""} | null }
-      numbers: {},
+      numbers: {}, // { 1: {alias, uid} | null }
       prizes: { p1:"", p2:"", p3:"" },
-      aliasDraft: "",
       selectedNumber: null,
       backend: "local", // "local" | "firebase"
-      fb: { app: null, db: null, ref: null }
+      fb: { app: null, db: null, ref: null },
+      auth: { user: null, isAdmin: false }
     };
 
     const els = {
@@ -164,30 +198,34 @@
       prize3: document.getElementById('prize3'),
       fbCfg: document.getElementById('firebaseConfig'),
       btnEnableFb: document.getElementById('btnEnableFb'),
-      tplItem: document.getElementById('tpl-item')
+      tplItem: document.getElementById('tpl-item'),
+      // Auth UI
+      email: document.getElementById('email'),
+      password: document.getElementById('password'),
+      btnLogin: document.getElementById('btnLogin'),
+      btnRegister: document.getElementById('btnRegister'),
+      btnGoogle: document.getElementById('btnGoogle'),
+      btnLogout: document.getElementById('btnLogout'),
+      authBox: document.getElementById('authBox'),
+      userBox: document.getElementById('userBox'),
+      userPhoto: document.getElementById('userPhoto'),
+      userName: document.getElementById('userName'),
+      userEmail: document.getElementById('userEmail'),
     };
 
     // ============================
-    //  Persistencia (adaptador)
+    //  Persistencia local
     // ============================
-    const storageKey = 'rifa100_v1';
-
+    const storageKey = 'rifa100_v2_login';
     const LocalAdapter = {
-      load(){
-        try{
-          const raw = localStorage.getItem(storageKey);
-          if(!raw) return null;
-          return JSON.parse(raw);
-        }catch(e){ console.warn('No se pudo leer localStorage', e); return null; }
-      },
-      save(snapshot){
-        try{
-          localStorage.setItem(storageKey, JSON.stringify(snapshot));
-        }catch(e){ console.warn('No se pudo guardar localStorage', e); }
-      },
-      subscribe(){ /* local no tiene realtime */ return () => {}; }
+      load(){ try{ const raw = localStorage.getItem(storageKey); return raw? JSON.parse(raw): null; }catch(e){ return null; }},
+      save(snapshot){ try{ localStorage.setItem(storageKey, JSON.stringify(snapshot)); }catch(e){} },
+      subscribe(){ return ()=>{} }
     };
 
+    // ============================
+    //  Firebase (Auth + RTDB)
+    // ============================
     let FirebaseAdapter = {
       async enableFromConfigJson(jsonString){
         try{
@@ -195,53 +233,56 @@
           await ensureFirebase();
           const app = window.firebase.initializeApp(cfg);
           const db = window.firebase.database();
+          const auth = window.firebase.auth();
           const ref = db.ref('rifa100/default');
           state.backend = 'firebase';
-          state.fb = { app, db, ref };
+          state.fb = { app, db, ref, auth };
 
-          // Si no existe datos, inicialízalos
+          // Inicializar datos si no existen
           ref.child('snapshot').get().then(snap=>{
             if(!snap.exists()){
-              const init = buildSnapshot();
-              ref.child('snapshot').set(init);
+              ref.child('snapshot').set(buildSnapshot());
             }
           });
 
           // Suscripción realtime
           ref.child('snapshot').on('value', (snap)=>{
-            if(snap.exists()){
-              applySnapshot(snap.val(), {silentSave:true});
-            }
+            if(snap.exists()) applySnapshot(snap.val(), {silentSave:true});
           });
 
-          // Guardar premios y alias en otro nodo para no sobreescribir
-          watchPrizeInputs((prz)=> ref.child('snapshot/prizes').set(prz));
+          // Auth state changes
+          auth.onAuthStateChanged(user=>{
+            state.auth.user = user;
+            state.auth.isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
+            updateAuthUI();
+            // Prefill alias con nombre del usuario
+            if(user && !els.alias.value){ els.alias.value = user.displayName || (user.email? user.email.split('@')[0] : ''); }
+          });
+
+          // En modo login, premios solo editables por admin
+          setPrizesDisabledIfNeeded();
 
           return true;
-        }catch(e){ alert('No se pudo habilitar Firebase. Revisa el JSON.\n'+e); return false; }
+        }catch(e){ alert('No se pudo habilitar Firebase/Auth. Revisa el JSON.
+'+e); return false; }
       },
-      save(snapshot){
-        if(state.backend!=='firebase' || !state.fb.ref) return;
-        state.fb.ref.child('snapshot').set(snapshot);
-      },
-      subscribe(){ /* ya se hace al habilitar */ return () => {}; }
+      // Escrituras granulares para evitar sobrescribir
+      setNumber(no, obj){ if(state.backend==='firebase') state.fb.ref.child(`snapshot/numbers/${no}`).set(obj); },
+      setPrizes(prz){ if(state.backend==='firebase') state.fb.ref.child('snapshot/prizes').set(prz); },
+      resetAll(){ if(state.backend==='firebase') state.fb.ref.child('snapshot').set(buildSnapshot()); }
     };
 
-    // Cargar SDK Firebase si hace falta
     async function ensureFirebase(){
       if(window.firebase) return;
       await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js');
       await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js');
     }
 
-    function loadScript(src){
-      return new Promise((res,rej)=>{
-        const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
-      });
-    }
+    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 
     // ============================
-    //  Lógica de la App
+    //  Lógica base
     // ============================
     function buildSnapshot(){
       const numbers = {}; for(let i=1;i<=TOTAL;i++) numbers[i]=null;
@@ -252,19 +293,19 @@
       state.numbers = snap.numbers || {};
       state.prizes = snap.prizes || {p1:"",p2:"",p3:""};
       renderAll();
-      if(!opts.silentSave){ persist(); }
+      if(!opts.silentSave) persist();
     }
 
     function persist(){
       const snapshot = { numbers: state.numbers, prizes: state.prizes };
-      if(state.backend==='firebase') FirebaseAdapter.save(snapshot);
+      if(state.backend==='firebase'){ /* no full save; granular en acciones */ }
       else LocalAdapter.save(snapshot);
     }
 
     function initFromStorage(){
       const data = LocalAdapter.load();
-      if(data){ applySnapshot(data,{silentSave:true}); }
-      else{ applySnapshot(buildSnapshot(),{silentSave:true}); }
+      if(data) applySnapshot(data,{silentSave:true});
+      else applySnapshot(buildSnapshot(),{silentSave:true});
     }
 
     // ============================
@@ -277,6 +318,7 @@
       els.prize1.value = state.prizes.p1 || '';
       els.prize2.value = state.prizes.p2 || '';
       els.prize3.value = state.prizes.p3 || '';
+      setPrizesDisabledIfNeeded();
     }
 
     function renderCounts(){
@@ -311,10 +353,33 @@
         const node = els.tplItem.content.firstElementChild.cloneNode(true);
         node.querySelector('.no').textContent = no;
         node.querySelector('.alias-text').textContent = obj.alias;
+        node.querySelector('.owner').textContent = shortUid(obj.uid);
+        const canRelease = canCurrentUserRelease(obj);
         node.querySelector('.btn-free').onclick = ()=> releaseNumber(parseInt(no));
+        node.querySelector('.btn-free').disabled = !canRelease;
         frag.appendChild(node);
       }
       els.list.appendChild(frag);
+    }
+
+    function shortUid(uid){ return uid? uid.slice(0,6) : '-'; }
+
+    // ============================
+    //  Autorización y reglas
+    // ============================
+    function userRequired(){
+      if(state.backend==='firebase' && !state.auth.user){
+        alert('Debes iniciar sesión para realizar esta acción.');
+        return false;
+      }
+      return true;
+    }
+
+    function isAdmin(){ return !!state.auth.isAdmin; }
+    function canCurrentUserRelease(obj){
+      if(!obj) return false;
+      if(isAdmin()) return true;
+      const u = state.auth.user; return u && obj.uid === u.uid;
     }
 
     // ============================
@@ -324,64 +389,86 @@
       state.selectedNumber = no;
       const current = state.numbers[no];
       if(current){
-        if(confirm(`El número #${no} está reservado por "${current.alias}". ¿Liberarlo?`)){
-          releaseNumber(no);
+        if(!userRequired()) return;
+        if(canCurrentUserRelease(current)){
+          if(confirm(`El número #${no} está reservado por "${current.alias}". ¿Liberarlo?`)) releaseNumber(no);
+        }else{
+          alert('Solo el dueño del número o un administrador puede liberarlo.');
         }
         return;
       }
       const alias = (els.alias.value||'').trim();
-      if(!alias){
-        alert('Escribe tu nombre o alias en el campo superior.');
-        els.alias.focus();
-        return;
-      }
+      if(!alias){ alert('Escribe tu alias.'); els.alias.focus(); return; }
       reserveNumber(no, alias);
     }
 
     function reserveNumber(no, alias){
       if(state.numbers[no]) return;
-      state.numbers[no] = { alias };
+      if(!userRequired()) return;
+      const uid = state.auth.user? state.auth.user.uid : 'local';
+      const obj = { alias, uid };
+      state.numbers[no] = obj;
       renderAll();
-      persist();
+      if(state.backend==='firebase') FirebaseAdapter.setNumber(no, obj); else persist();
     }
 
     function releaseNumber(no){
-      if(!state.numbers[no]) return;
+      const cur = state.numbers[no];
+      if(!cur) return;
+      if(state.backend==='firebase' && !canCurrentUserRelease(cur)){ alert('No tienes permisos para liberar este número.'); return; }
       state.numbers[no] = null;
       renderAll();
-      persist();
+      if(state.backend==='firebase') FirebaseAdapter.setNumber(no, null); else persist();
     }
 
     function exportCSV(){
-      const rows = [["numero","alias"], ...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n, v.alias])];
-      const csv = rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\n');
+      const rows = [["numero","alias","uid"], ...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n, v.alias, v.uid])];
+      const csv = rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('
+');
       const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'rifa_amaruki.csv'; a.click();
-      URL.revokeObjectURL(url);
+      const a = document.createElement('a'); a.href = url; a.download = 'rifa_amaruki.csv'; a.click(); URL.revokeObjectURL(url);
     }
 
     function watchPrizeInputs(onChange){
       const update = ()=>{
         state.prizes = { p1: els.prize1.value.trim(), p2: els.prize2.value.trim(), p3: els.prize3.value.trim() };
+        if(state.backend==='firebase') FirebaseAdapter.setPrizes(state.prizes); else persist();
         if(onChange) onChange(state.prizes);
-        persist();
       };
       ['input','change'].forEach(ev=>{
         els.prize1.addEventListener(ev, update);
         els.prize2.addEventListener(ev, update);
         els.prize3.addEventListener(ev, update);
       });
-      // llamada inicial
       update();
+    }
+
+    function setPrizesDisabledIfNeeded(){
+      const disabled = (state.backend==='firebase' && !isAdmin());
+      [els.prize1, els.prize2, els.prize3].forEach(i=> i.disabled = disabled);
     }
 
     // ============================
     //  Utilidades
     // ============================
-    function escapeHtml(str){
-      return str.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    function escapeHtml(str){ return str.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+
+    function updateAuthUI(){
+      const u = state.auth.user;
+      if(u){
+        els.authBox.style.display = 'none';
+        els.btnLogout.style.display = '';
+        els.userBox.style.display = 'flex';
+        els.userName.textContent = u.displayName || (u.email? u.email.split('@')[0] : '(sin nombre)');
+        els.userEmail.textContent = u.email || '';
+        els.userPhoto.src = u.photoURL || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="%23121a33"/><text x="50%" y="54%" fill="white" font-family="Arial" font-size="22" text-anchor="middle">👤</text></svg>';
+      }else{
+        els.authBox.style.display = '';
+        els.btnLogout.style.display = 'none';
+        els.userBox.style.display = 'none';
+      }
+      setPrizesDisabledIfNeeded();
     }
 
     // ============================
@@ -390,7 +477,7 @@
     els.btnQuick.onclick = ()=>{
       if(state.selectedNumber==null){ alert('Primero toca un número disponible.'); return; }
       const alias = (els.alias.value||'').trim();
-      if(!alias){ alert('Escribe tu nombre o alias.'); els.alias.focus(); return; }
+      if(!alias){ alert('Escribe tu alias.'); els.alias.focus(); return; }
       if(state.numbers[state.selectedNumber]){ alert('Ese número ya está reservado.'); return; }
       reserveNumber(state.selectedNumber, alias);
     };
@@ -399,25 +486,53 @@
     els.search.addEventListener('input', ()=>{ renderGrid(); renderList(); });
 
     els.btnReset.onclick = ()=>{
-      if(!confirm('Esto borrará todos los datos locales de esta rifa. ¿Continuar?')) return;
+      if(!confirm('Esto reiniciará toda la rifa. ¿Continuar?')) return;
+      if(state.backend==='firebase') FirebaseAdapter.resetAll();
       applySnapshot(buildSnapshot());
     };
 
     els.btnRelease.onclick = ()=>{
       const raw = prompt('Ingresa el número a liberar (1-100):');
       if(!raw) return; const no = parseInt(raw,10); if(isNaN(no)||no<1||no>100){ alert('Número inválido'); return; }
-      if(!state.numbers[no]){ alert('Ese número ya está libre.'); return; }
+      const cur = state.numbers[no];
+      if(!cur){ alert('Ese número ya está libre.'); return; }
+      if(state.backend==='firebase' && !canCurrentUserRelease(cur)){ alert('No tienes permisos para liberar este número.'); return; }
       releaseNumber(no);
     };
 
+    // Auth buttons
     els.btnEnableFb.onclick = async ()=>{
       const json = els.fbCfg.value.trim();
       if(!json){ alert('Pega el JSON de configuración de Firebase.'); return; }
       const ok = await FirebaseAdapter.enableFromConfigJson(json);
-      if(ok) alert('Firebase habilitado. ¡Sincronización en tiempo real activa!');
+      if(ok) alert('Firebase habilitado. Auth + Realtime activos.');
     };
 
-    // Iniciar y enlazar premios
+    els.btnLogin.onclick = async ()=>{
+      try{
+        await ensureFirebase();
+        await window.firebase.auth().signInWithEmailAndPassword(els.email.value, els.password.value);
+      }catch(e){ alert('Error al iniciar sesión: '+e.message); }
+    };
+    els.btnRegister.onclick = async ()=>{
+      try{
+        await ensureFirebase();
+        const cred = await window.firebase.auth().createUserWithEmailAndPassword(els.email.value, els.password.value);
+        if(cred.user && !cred.user.displayName){ await cred.user.updateProfile({ displayName: els.email.value.split('@')[0] }); }
+      }catch(e){ alert('No se pudo crear la cuenta: '+e.message); }
+    };
+    els.btnGoogle.onclick = async ()=>{
+      try{
+        await ensureFirebase();
+        const provider = new window.firebase.auth.GoogleAuthProvider();
+        await window.firebase.auth().signInWithPopup(provider);
+      }catch(e){ alert('Error con Google: '+e.message); }
+    };
+    els.btnLogout.onclick = async ()=>{
+      try{ await window.firebase.auth().signOut(); }catch(e){ alert('Error al salir: '+e.message); }
+    };
+
+    // Iniciar
     initFromStorage();
     watchPrizeInputs();
   </script>
