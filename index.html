@@ -101,8 +101,7 @@
           </div>
 
           <div class="divider"></div>
-          <details>
-            <summary class="tiny">⚙️ Ajustes de sincronización (Firebase)</summary>
+          <details id="syncSettings" style="display:none"><summary class="tiny">⚙️ Ajustes de sincronización (Firebase)</summary>
             <textarea id="cfg" rows="7" style="width:100%;margin-top:8px">{
   "apiKey": "AIzaSyAdhD7Lr-xxaaj5WHKUxtJjxwV8kT-ETi4",
   "authDomain": "rifa-90a26.firebaseapp.com",
@@ -231,7 +230,7 @@
       else { el.authBox.style.display='block'; el.userBox.style.display='none'; }
       toggleAdminSections();
     }
-    function toggleAdminSections(){ const sec=document.getElementById('reqSection'); if(sec){ sec.style.display = state.isAdminUI? '' : 'none'; } }
+    function toggleAdminSections(){ const sec=document.getElementById('reqSection'); if(sec){ sec.style.display = state.isAdminUI? '' : 'none'; } const sync=document.getElementById('syncSettings'); if(sync){ sync.style.display = state.isAdminUI? '' : 'none'; } }
 
     // Auth buttons (sin registro público)
     document.getElementById('btnLogin').onclick=async ()=>{ try{ if(!state.fb.app){ await enableFb(); } await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const email=el.email.value.trim().toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ alert('Correo no autorizado como administrador.'); return;} await firebase.auth().signInWithEmailAndPassword(email, el.password.value); state.isAdminUI=true; toggleAdminSections(); }catch(e){ alert('Error al iniciar sesión: '+e.message);} };
