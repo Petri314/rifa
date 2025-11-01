@@ -179,7 +179,7 @@
     function render(){ renderCounts(); renderGrid(); renderList(); renderReqs(); el.p1.value=state.prizes.p1||''; el.p2.value=state.prizes.p2||''; el.p3.value=state.prizes.p3||''; setTitleCount(); toggleAdminSections(); }
     function renderCounts(){const t=Object.values(state.numbers).filter(v=>v).length; el.taken.textContent=t; el.available.textContent=TOTAL-t;}
     function isPending(no){ return !!Object.values(state.requests).find(r=>r.no===no); }
-    function renderGrid(){ el.grid.innerHTML=''; const term=(el.search.value||'').toLowerCase(); for(let i=1;i<=TOTAL;i++){const v=state.numbers[i]; const pending=isPending(i); const d=document.createElement('div'); d.className='num '+(v?'taken':(pending?'pending':'available')); const aliasMini=v? v.alias : (pending? 'Pendiente' : ''); d.innerHTML=`${i}<div class="alias-mini">${aliasMini}</div>`; if(term){const m=(''+i).includes(term)|| (v&&v.alias.toLowerCase().includes(term)); d.style.opacity=m?1:.35;} d.onclick=()=>onNumber(i); el.grid.appendChild(d);} }
+    function renderGrid(){ el.grid.innerHTML=''; const term=(el.search.value||'').toLowerCase(); for(let i=1;i<=TOTAL;i++){const v=state.numbers[i]; const pending=isPending(i); const d=document.createElement('div'); d.className='num '+(v?'taken':(pending?'pending':'available')); const aliasMini=v? v.alias : (pending? 'Pendiente' : ''); d.innerHTML=`${i}<div class=\"alias-mini\">${aliasMini}</div>`; if(term){const m=(''+i).includes(term)|| (v&&v.alias.toLowerCase().includes(term)); d.style.opacity=m?1:.35;} d.onclick=()=>onNumber(i); el.grid.appendChild(d);} }
     function renderList(){ el.list.innerHTML=''; const frag=document.createDocumentFragment(); Object.entries(state.numbers).filter(([n,v])=>v).sort((a,b)=>a[0]-b[0]).forEach(([no,obj])=>{ const node=el.tpl.content.firstElementChild.cloneNode(true); node.querySelector('.no').textContent=no; node.querySelector('.alias').textContent=obj.alias; node.querySelector('.uid').textContent=(obj.uid||'admin').slice(0,6); const btn=node.querySelector('.btnFree'); btn.disabled=!state.isAdminUI; btn.onclick=()=>{ if(!state.isAdminUI){alert('Solo el admin puede liberar.');return;} release(parseInt(no)); }; frag.appendChild(node); }); el.list.appendChild(frag); }
     function renderReqs(){ el.reqList.innerHTML=''; const entries=Object.entries(state.requests).sort((a,b)=>a[1].ts-b[1].ts); const frag=document.createDocumentFragment(); for(const [id,r] of entries){ const node=el.tplReq.content.firstElementChild.cloneNode(true); node.querySelector('.no').textContent=r.no; node.querySelector('.alias').textContent=r.alias; node.querySelector('.client').textContent=(r.clientId||'usr').slice(0,6); const btnA=node.querySelector('.btnApprove'); const btnR=node.querySelector('.btnReject'); const canAdmin = state.isAdminUI; btnA.disabled=!canAdmin; btnR.disabled=!canAdmin; btnA.onclick=()=>approveReq(id); btnR.onclick=()=>rejectReq(id); frag.appendChild(node);} el.reqList.appendChild(frag); }
 
@@ -188,7 +188,7 @@
     function onNumber(no){ const cur=state.numbers[no]; if(cur){ alert('Ese número ya está reservado.'); return; } if(isPending(no)){ alert('Ese número ya tiene una solicitud pendiente.'); return; } const a=(el.alias.value||'').trim(); if(!a){ alert('Escribe tu alias.'); el.alias.focus(); return;} createRequest(no,a); }
     function createRequest(no,alias){ const id='req_'+Date.now()+"_"+Math.random().toString(36).slice(2,7); const req={id,no,alias,ts:Date.now(),clientId:getClientId()}; state.requests[id]=req; render(); if(state.backend==='firebase') setRequest(id,req); else save(); alert(`Solicitud enviada para el número #${no}. Espera aprobación del admin.`); }
 
-    // ===== Flujo admin =====
+    // ===== Flujo admin (versión anterior estable) =====
     async function approveReq(id){ const r=state.requests[id]; if(!r) return; if(!state.isAdminUI){ alert('Solo el admin puede aprobar.'); return; }
       if(state.numbers[r.no]){ delete state.requests[id]; persistRequests(); render(); return; }
       const obj={alias:r.alias, uid: state.user? state.user.uid : 'admin'};
@@ -208,7 +208,7 @@
     function getClientId(){ try{ let id=localStorage.getItem('rifa_client_id'); if(!id){ id='c_'+Math.random().toString(36).slice(2,10); localStorage.setItem('rifa_client_id',id);} return id; }catch(e){ return 'client'; } }
 
     // CSV
-    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'admin'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
+    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'admin'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
 
     // Search
     el.search.addEventListener('input',()=>{renderGrid();renderList();});
@@ -234,7 +234,7 @@
       auth.onAuthStateChanged(u=>{ state.user=u||null; const email=(u?.email||'').toLowerCase(); state.isAdmin = !!(u && ADMIN_EMAILS.includes(email)); updateAuthUI(); if(u && !el.alias.value){ el.alias.value=u.displayName|| (u.email?u.email.split('@')[0]:''); } if(state.isAdminUI){ toggleAdminSections(); } });
       if(!silent) alert('Firebase habilitado. Inicia sesión solo si eres admin.');
       return app;
-    }catch(e){ if(!silent) alert('No se pudo habilitar Firebase. Revisa el JSON.\\n'+e); throw e; } }
+    }catch(e){ if(!silent) alert('No se pudo habilitar Firebase. Revisa el JSON.\n'+e); throw e; } }
 
     function setNumber(no,obj){ return state.fb.ref.child(`snapshot/numbers/${no}`).set(obj); }
     function setRequest(id,obj){ return state.fb.ref.child(`snapshot/requests/${id}`).set(obj); }
