@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rifa 100 Números — Amaruki (Login + Tiempo real)</title>
+  <title>Rifa 100 Números — Amaruki (Aprobación por Admin)</title>
   <style>
-    :root{ --bg:#0b1020; --card:#121a33; --muted:#7f8db2; --accent:#2bb3ff; --accent2:#3ad1a1; --danger:#ff5c7a }
+    :root{ --bg:#0b1020; --card:#121a33; --muted:#7f8db2; --accent:#2bb3ff; --accent2:#3ad1a1; --danger:#ff5c7a; --pending:#f3c969 }
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6ecff}
     .container{max-width:1100px;margin:0 auto;padding:18px}
@@ -18,8 +18,9 @@
     @media (max-width:520px){.grid{grid-template-columns:repeat(5,1fr)}}
     .num{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 0;text-align:center;font-weight:700;cursor:pointer;user-select:none}
     .num.available{background:linear-gradient(180deg,rgba(43,179,255,.12),rgba(43,179,255,.04))}
+    .num.pending{background:linear-gradient(180deg,rgba(243,201,105,.22),rgba(243,201,105,.06));border-color:rgba(243,201,105,.5)}
     .num.taken{background:linear-gradient(180deg,rgba(255,92,122,.18),rgba(255,92,122,.06));border-color:rgba(255,92,122,.45)}
-    .alias-mini{font-size:10px;opacity:.85}
+    .alias-mini{font-size:10px;opacity:.9}
     .panel{padding:14px;display:flex;flex-direction:column;gap:12px}
     .row{display:flex;gap:8px;flex-wrap:wrap}
     input,button,textarea{border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0c1226;color:#eaf2ff;padding:10px 12px}
@@ -33,11 +34,12 @@
     .auth{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .avatar{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.18);object-fit:cover}
     .warn{background:#2a1320;border-color:#b74a62}
+    .tag{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(243,201,105,.18);border:1px solid rgba(243,201,105,.4);color:#ffeec0}
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎉 Rifa 100 Números — Amaruki <span class="tiny">(login + tiempo real)</span></h1>
+    <h1 id="title">🎉 Rifa 100 Números — Amaruki <span class="tiny">(aprobación por administrador)</span></h1>
     <div class="app">
       <section class="card">
         <div class="panel" style="padding-bottom:0">
@@ -55,8 +57,13 @@
       <aside class="card">
         <div class="panel">
           <h2>Panel de control</h2>
-          <div class="auth">
-            <div id="userBox" style="display:none;align-items:center;gap:8px">
+          <!-- Solo se mostrará el login al activar "Modo admin" con PIN -->
+          <div class="row" style="align-items:center">
+            <button id="btnAdminGate" class="secondary">🔒 Modo admin</button>
+            <span class="tiny">Los usuarios hacen solicitudes; el admin aprueba.</span>
+          </div>
+          <div class="auth" id="authArea" style="display:none">
+            <div id="userBox" style="display:none;align-items:center;gap:8px;width:100%">
               <img id="userPhoto" class="avatar" alt=""/>
               <div>
                 <div id="userName" style="font-weight:700"></div>
@@ -64,23 +71,35 @@
               </div>
               <button id="btnLogout" class="secondary" style="margin-left:auto">Salir</button>
             </div>
-            <div id="authBox">
-              <div class="row"><input id="email" placeholder="correo@ejemplo.com" style="flex:1"><input id="password" type="password" placeholder="Contraseña" style="flex:1"></div>
-              <div class="row"><button id="btnLogin">Entrar</button><button id="btnRegister" class="secondary">Crear cuenta</button><button id="btnGoogle" class="secondary">Google</button></div>
+            <div id="authBox" style="width:100%">
+              <div class="row"><input id="email" placeholder="admin@tu-dominio.com" style="flex:1"><input id="password" type="password" placeholder="Contraseña" style="flex:1"></div>
+              <div class="row"><button id="btnLogin">Entrar</button><button id="btnGoogle" class="secondary">Google</button></div>
+              <p class="tiny">El registro está desactivado para usuarios. Solo el administrador puede iniciar sesión.</p>
             </div>
           </div>
           <div class="divider"></div>
+
           <div class="row"><input id="alias" placeholder="Tu alias visible" style="flex:1"><button id="btnQuick">Reservar seleccionado</button></div>
           <div class="row"><input id="search" placeholder="Buscar alias o número…" style="flex:1"><button id="btnExport" class="secondary">Exportar CSV</button></div>
           <div class="divider"></div>
+
           <div class="list" id="list"></div>
+          <div class="divider"></div>
+
+          <div>
+            <h3 style="margin:0 0 6px">📥 Solicitudes pendientes <span class="tag" id="reqCount">0</span></h3>
+            <div class="list" id="reqList"></div>
+          </div>
+
           <div class="divider"></div>
           <div>
             <h3 style="margin:0 0 6px">🏆 Premios</h3>
             <div class="row"><input id="p1" placeholder="1° Premio" style="flex:1"></div>
             <div class="row"><input id="p2" placeholder="2° Premio" style="flex:1"></div>
             <div class="row"><input id="p3" placeholder="3° Premio" style="flex:1"></div>
+            <p class="tiny">Los premios solo deben editarlos desde la sesión del administrador.</p>
           </div>
+
           <div class="divider"></div>
           <details>
             <summary class="tiny">⚙️ Ajustes de sincronización (Firebase)</summary>
@@ -93,9 +112,9 @@
   "messagingSenderId": "42485595611",
   "appId": "1:42485595611:web:ee2aa2410704a6af573bfe"
 }</textarea>
-            <div class="row"><button id="btnEnable">Habilitar Firebase</button><span class="tiny">Pega aquí tu JSON si necesitas cambiarlo</span></div>
+            <div class="row"><button id="btnEnable">Habilitar Firebase</button><span class="tiny">(Opcional: cambia el JSON si fuera necesario)</span></div>
           </details>
-          <p class="tiny">Debes iniciar sesión para reservar números. Si Firebase no está habilitado, funciona en modo local (sólo en este navegador).</p>
+          <p class="tiny">Sin Firebase: funciona localmente. Con Firebase: las solicitudes y aprobaciones se sincronizan en tiempo real.</p>
         </div>
       </aside>
     </div>
@@ -104,63 +123,120 @@
   <template id="tplItem">
     <div class="item"><div><b>#<span class="no"></span></b> — <span class="alias"></span> <span class="tiny" style="opacity:.8">(<span class="uid"></span>)</span></div><button class="secondary btnFree">Liberar</button></div>
   </template>
+  <template id="tplReq">
+    <div class="item"><div><b>#<span class="no"></span></b> — <span class="alias"></span> <span class="tiny" style="opacity:.8">(<span class="client"></span>)</span></div><div class="row"><button class="secondary btnReject">Rechazar</button><button class="btnApprove">Aprobar</button></div></div>
+  </template>
 
   <script>
-    // ===== Estado =====
+    // ===== Config rápida =====
     const TOTAL=100; 
-    const state={numbers:{}, prizes:{p1:"",p2:"",p3:""}, backend:'local', fb:{app:null,db:null,auth:null,ref:null}, user:null};
-    const el={grid:by('grid'), list:by('list'), available:by('available'), taken:by('taken'), alias:by('alias'), search:by('search'), p1:by('p1'), p2:by('p2'), p3:by('p3'), tpl:by('tplItem'), email:by('email'), password:by('password'), btnLogin:by('btnLogin'), btnRegister:by('btnRegister'), btnGoogle:by('btnGoogle'), btnLogout:by('btnLogout'), authBox:by('authBox'), userBox:by('userBox'), userName:by('userName'), userEmail:by('userEmail'), userPhoto:by('userPhoto'), btnEnable:by('btnEnable'), cfg:by('cfg'), btnQuick:by('btnQuick'), btnExport:by('btnExport')};
+    const ADMIN_EMAILS=[
+      // Cambia por tu correo admin
+      'patricio@example.com'
+    ];
+    const ADMIN_PIN = '1234'; // Cambia este PIN para abrir el login de admin
 
+    // ===== Estado =====
+    const state={numbers:{}, prizes:{p1:"",p2:"",p3:""}, requests:{}, backend:'local', fb:{app:null,db:null,auth:null,ref:null}, user:null, isAdmin:false, adminGate:false};
+    const el={grid:by('grid'), list:by('list'), available:by('available'), taken:by('taken'), alias:by('alias'), search:by('search'), p1:by('p1'), p2:by('p2'), p3:by('p3'), tpl:by('tplItem'), tplReq:by('tplReq'), email:by('email'), password:by('password'), btnLogin:by('btnLogin'), btnGoogle:by('btnGoogle'), btnLogout:by('btnLogout'), authBox:by('authBox'), userBox:by('userBox'), userName:by('userName'), userEmail:by('userEmail'), userPhoto:by('userPhoto'), btnEnable:by('btnEnable'), cfg:by('cfg'), btnQuick:by('btnQuick'), btnExport:by('btnExport'), reqList:by('reqList'), reqCount:by('reqCount'), authArea:by('authArea'), btnAdminGate:by('btnAdminGate')};
     function by(id){return document.getElementById(id)}
 
-    // ===== Local init =====
-    function build(){const n={};for(let i=1;i<=TOTAL;i++) n[i]=null;return {numbers:n,prizes:{...state.prizes}}}
-    function load(){try{const x=localStorage.getItem('rifa_login_v1');return x?JSON.parse(x):null}catch(e){return null}}
-    function save(){try{localStorage.setItem('rifa_login_v1',JSON.stringify({numbers:state.numbers,prizes:state.prizes}))}catch(e){}}
+    // ===== Local storage =====
+    function build(){const n={};for(let i=1;i<=TOTAL;i++) n[i]=null;return {numbers:n,prizes:{...state.prizes},requests:{}}}
+    function load(){try{const x=localStorage.getItem('rifa_approval_v1');return x?JSON.parse(x):null}catch(e){return null}}
+    function save(){try{localStorage.setItem('rifa_approval_v1',JSON.stringify({numbers:state.numbers,prizes:state.prizes,requests:state.requests}))}catch(e){}}
 
-    function apply(snap,{silent}={}){state.numbers=snap.numbers||{};state.prizes=snap.prizes||{p1:"",p2:"",p3:""};render(); if(!silent && state.backend==='local') save();}
+    function apply(snap,{silent}={}){state.numbers=snap.numbers||{};state.prizes=snap.prizes||{p1:"",p2:"",p3:""};state.requests=snap.requests||{};render(); if(!silent && state.backend==='local') save();}
 
     function init(){const x=load(); apply(x||build(),{silent:true}); render();}
 
+    // ===== Notificaciones =====
+    function beep(){
+      try{
+        const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return;
+        const ctx = new Ctx();
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime+0.01);
+        o.start();
+        setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.15); o.stop(ctx.currentTime+0.2); ctx.close(); }, 180);
+      }catch(e){}
+    }
+    function setTitleCount(){
+      const c = Object.keys(state.requests||{}).length;
+      const base = 'Rifa 100 Números — Amaruki (Aprobación por Admin)';
+      document.title = c>0 ? `(${c}) ${base}` : base;
+      el.reqCount.textContent = c;
+    }
+
     // ===== Render =====
-    function render(){ renderCounts(); renderGrid(); renderList(); el.p1.value=state.prizes.p1||''; el.p2.value=state.prizes.p2||''; el.p3.value=state.prizes.p3||''; }
+    function render(){ renderCounts(); renderGrid(); renderList(); renderReqs(); el.p1.value=state.prizes.p1||''; el.p2.value=state.prizes.p2||''; el.p3.value=state.prizes.p3||''; setTitleCount(); }
     function renderCounts(){const t=Object.values(state.numbers).filter(v=>v).length; el.taken.textContent=t; el.available.textContent=TOTAL-t;}
-    function renderGrid(){ el.grid.innerHTML=''; const term=(el.search.value||'').toLowerCase(); for(let i=1;i<=TOTAL;i++){const v=state.numbers[i]; const d=document.createElement('div'); d.className='num '+(v?'taken':'available'); d.innerHTML=`${i}<div class="alias-mini">${v?escapeHtml(v.alias):''}</div>`; if(term){const m=(''+i).includes(term)|| (v&&v.alias.toLowerCase().includes(term)); d.style.opacity=m?1:.35;} d.onclick=()=>onNumber(i); el.grid.appendChild(d);} }
-    function renderList(){ el.list.innerHTML=''; const frag=document.createDocumentFragment(); Object.entries(state.numbers).filter(([n,v])=>v).sort((a,b)=>a[0]-b[0]).forEach(([no,obj])=>{ const node=el.tpl.content.firstElementChild.cloneNode(true); node.querySelector('.no').textContent=no; node.querySelector('.alias').textContent=obj.alias; node.querySelector('.uid').textContent=(obj.uid||'local').slice(0,6); const can=canRelease(obj); const btn=node.querySelector('.btnFree'); btn.disabled=!can; btn.onclick=()=>release(parseInt(no)); frag.appendChild(node); }); el.list.appendChild(frag); }
+    function isPending(no){ return !!Object.values(state.requests).find(r=>r.no===no); }
+    function renderGrid(){ el.grid.innerHTML=''; const term=(el.search.value||'').toLowerCase(); for(let i=1;i<=TOTAL;i++){const v=state.numbers[i]; const pending=isPending(i); const d=document.createElement('div'); d.className='num '+(v?'taken':(pending?'pending':'available')); const aliasMini=v? v.alias : (pending? 'Pendiente' : ''); d.innerHTML=`${i}<div class="alias-mini">${aliasMini}</div>`; if(term){const m=(''+i).includes(term)|| (v&&v.alias.toLowerCase().includes(term)); d.style.opacity=m?1:.35;} d.onclick=()=>onNumber(i); el.grid.appendChild(d);} }
+    function renderList(){ el.list.innerHTML=''; const frag=document.createDocumentFragment(); Object.entries(state.numbers).filter(([n,v])=>v).sort((a,b)=>a[0]-b[0]).forEach(([no,obj])=>{ const node=el.tpl.content.firstElementChild.cloneNode(true); node.querySelector('.no').textContent=no; node.querySelector('.alias').textContent=obj.alias; node.querySelector('.uid').textContent=(obj.uid||'admin').slice(0,6); const btn=node.querySelector('.btnFree'); btn.disabled=!state.isAdmin; btn.onclick=()=>{ if(!state.isAdmin){alert('Solo el admin puede liberar.');return;} release(parseInt(no)); }; frag.appendChild(node); }); el.list.appendChild(frag); }
+    function renderReqs(){ el.reqList.innerHTML=''; const entries=Object.entries(state.requests).sort((a,b)=>a[1].ts-b[1].ts); const frag=document.createDocumentFragment(); for(const [id,r] of entries){ const node=el.tplReq.content.firstElementChild.cloneNode(true); node.querySelector('.no').textContent=r.no; node.querySelector('.alias').textContent=r.alias; node.querySelector('.client').textContent=(r.clientId||'usr').slice(0,6); const btnA=node.querySelector('.btnApprove'); const btnR=node.querySelector('.btnReject'); btnA.disabled=!state.isAdmin; btnR.disabled=!state.isAdmin; btnA.onclick=()=>approveReq(id); btnR.onclick=()=>rejectReq(id); frag.appendChild(node);} el.reqList.appendChild(frag); }
 
-    function onNumber(no){ const cur=state.numbers[no]; if(cur){ if(state.backend==='firebase' && !canRelease(cur)){ alert('Solo el dueño o un admin puede liberar.'); return;} if(confirm(`Liberar #${no}?`)) release(no); return; }
-      const a=(el.alias.value||'').trim(); if(!a){ alert('Escribe tu alias.'); el.alias.focus(); return;} reserve(no,a); }
+    // ===== Flujo usuario (solicitud) =====
+    el.btnQuick.onclick=()=>{ const a=(el.alias.value||'').trim(); if(!a){alert('Escribe tu alias.'); return;} alert('Toca en la cuadrícula el número que quieres solicitar.'); };
+    function onNumber(no){ const cur=state.numbers[no]; if(cur){ alert('Ese número ya está reservado.'); return; } if(isPending(no)){ alert('Ese número ya tiene una solicitud pendiente.'); return; } const a=(el.alias.value||'').trim(); if(!a){ alert('Escribe tu alias.'); el.alias.focus(); return;} createRequest(no,a); }
+    function createRequest(no,alias){ const id='req_'+Date.now()+"_"+Math.random().toString(36).slice(2,7); const req={id,no,alias,ts:Date.now(),clientId:getClientId()}; state.requests[id]=req; render(); if(state.backend==='firebase') setRequest(id,req); else save(); alert(`Solicitud enviada para el número #${no}. Espera aprobación del admin.`); }
 
-    function reserve(no,alias){ const uid=state.user?state.user.uid:'local'; const obj={alias,uid}; state.numbers[no]=obj; render(); if(state.backend==='firebase') setNumber(no,obj); else save(); }
-    function release(no){ const cur=state.numbers[no]; if(!cur) return; if(state.backend==='firebase' && !canRelease(cur)) return; state.numbers[no]=null; render(); if(state.backend==='firebase') setNumber(no,null); else save(); }
-    function canRelease(obj){ if(!obj) return false; if(state.user && obj.uid===state.user.uid) return true; return false; }
+    // ===== Flujo admin =====
+    function approveReq(id){ const r=state.requests[id]; if(!r) return; if(state.numbers[r.no]){ delete state.requests[id]; persistRequests(); render(); return; } // ya tomado
+      const obj={alias:r.alias, uid: state.user? state.user.uid : 'admin'}; state.numbers[r.no]=obj; delete state.requests[id]; render(); if(state.backend==='firebase'){ setNumber(r.no,obj); delRequest(id); } else save(); }
+    function rejectReq(id){ if(!state.requests[id]) return; delete state.requests[id]; render(); if(state.backend==='firebase') delRequest(id); else save(); }
+
+    function release(no){ const cur=state.numbers[no]; if(!cur) return; state.numbers[no]=null; render(); if(state.backend==='firebase') setNumber(no,null); else save(); }
+
+    function persistRequests(){ if(state.backend==='firebase'){} else save(); }
+
+    function getClientId(){ try{ let id=localStorage.getItem('rifa_client_id'); if(!id){ id='c_'+Math.random().toString(36).slice(2,10); localStorage.setItem('rifa_client_id',id);} return id; }catch(e){ return 'client'; } }
 
     // CSV
-    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'local'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
+    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'admin'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
 
     // Search
     el.search.addEventListener('input',()=>{renderGrid();renderList();});
-    el.btnQuick.onclick=()=>{ const a=(el.alias.value||'').trim(); if(!a){alert('Escribe tu alias.'); return;} alert('Toca en la cuadrícula el número que quieres.'); };
+
+    // ===== Admin Gate (PIN) =====
+    el.btnAdminGate.onclick=()=>{ const p=prompt('PIN de administrador:'); if(p===ADMIN_PIN){ state.adminGate=true; document.getElementById('authArea').style.display=''; } else if(p){ alert('PIN incorrecto'); } };
 
     // ===== Firebase =====
+    let lastReqIds = new Set();
     el.btnEnable.onclick=enableFb;
     async function enableFb(){ try{ const cfg=JSON.parse(el.cfg.value.trim()); await ensureFb(); const app=firebase.initializeApp(cfg); const db=firebase.database(); const auth=firebase.auth(); const ref=db.ref('rifa100/default'); state.backend='firebase'; state.fb={app,db,auth,ref}; // init if empty
       ref.child('snapshot').get().then(s=>{ if(!s.exists()) ref.child('snapshot').set(build()); });
       ref.child('snapshot').on('value',s=>{ if(s.exists()) apply(s.val(),{silent:true}); render(); });
-      auth.onAuthStateChanged(u=>{ state.user=u||null; updateAuthUI(); if(u && !el.alias.value){ el.alias.value=u.displayName|| (u.email?u.email.split('@')[0]:''); }});
-      alert('Firebase habilitado. Inicia sesión.');
+      // requests realtime con notificación
+      ref.child('snapshot/requests').on('value',s=>{ 
+        const prev = new Set(Object.keys(state.requests||{}));
+        const next = s.exists()? s.val(): {};
+        state.requests = next || {};
+        const nowIds = new Set(Object.keys(state.requests));
+        // nuevos ids = en nowIds pero no en prev
+        let newCount = 0; nowIds.forEach(id=>{ if(!prev.has(id)) newCount++; });
+        renderReqs(); renderGrid(); setTitleCount();
+        if(state.isAdmin && newCount>0){ beep(); }
+      });
+      auth.onAuthStateChanged(u=>{ state.user=u||null; state.isAdmin=!!(u && ADMIN_EMAILS.includes((u.email||'').toLowerCase())); updateAuthUI(); if(u && !el.alias.value){ el.alias.value=u.displayName|| (u.email?u.email.split('@')[0]:''); }});
+      alert('Firebase habilitado. Inicia sesión solo si eres admin.');
     }catch(e){ alert('No se pudo habilitar Firebase. Revisa el JSON.\\n'+e); } }
 
     function setNumber(no,obj){ state.fb.ref.child(`snapshot/numbers/${no}`).set(obj); }
+    function setRequest(id,obj){ state.fb.ref.child(`snapshot/requests/${id}`).set(obj); }
+    function delRequest(id){ state.fb.ref.child(`snapshot/requests/${id}`).remove(); }
 
-    function updateAuthUI(){ const u=state.user; if(u){ el.authBox.style.display='none'; el.userBox.style.display='flex'; el.userName.textContent=u.displayName|| (u.email?u.email.split('@')[0]:''); el.userEmail.textContent=u.email||''; el.userPhoto.src=u.photoURL||'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="%23121a33"/><text x="50%" y="54%" fill="white" font-family="Arial" font-size="22" text-anchor="middle">👤</text></svg>'; }
-      else { el.authBox.style.display='block'; el.userBox.style.display='none'; } }
+    function updateAuthUI(){ const u=state.user; const gate=state.adminGate; const area=document.getElementById('authArea'); area.style.display = gate? '' : 'none';
+      if(u){ el.authBox.style.display='none'; el.userBox.style.display='flex'; el.userName.textContent=u.displayName|| (u.email?u.email.split('@')[0]:''); el.userEmail.textContent=u.email||''; el.userPhoto.src=u.photoURL||'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="%23121a33"/><text x="50%" y="54%" fill="white" font-family="Arial" font-size="22" text-anchor="middle">👤</text></svg>'; }
+      else { el.authBox.style.display='block'; el.userBox.style.display='none'; }
+    }
 
-    // Auth buttons
-    el.btnLogin.onclick=async ()=>{ try{ await ensureFb(); await firebase.auth().signInWithEmailAndPassword(el.email.value, el.password.value); }catch(e){ alert('Error al iniciar sesión: '+e.message);} };
-    el.btnRegister.onclick=async ()=>{ try{ await ensureFb(); const cred=await firebase.auth().createUserWithEmailAndPassword(el.email.value, el.password.value); if(cred.user && !cred.user.displayName){ await cred.user.updateProfile({displayName: el.email.value.split('@')[0]}); } }catch(e){ alert('No se pudo crear la cuenta: '+e.message);} };
-    el.btnGoogle.onclick=async ()=>{ try{ await ensureFb(); const provider=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithPopup(provider); }catch(e){ alert('Error con Google: '+e.message);} };
-    el.btnLogout.onclick=async ()=>{ try{ await firebase.auth().signOut(); }catch(e){ alert('Error al salir: '+e.message);} };
+    // Auth buttons (sin registro para usuarios)
+    document.getElementById('btnLogin').onclick=async ()=>{ try{ await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const email=el.email.value.trim().toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ alert('Correo no autorizado como administrador.'); return;} await firebase.auth().signInWithEmailAndPassword(email, el.password.value); }catch(e){ alert('Error al iniciar sesión: '+e.message);} };
+    document.getElementById('btnGoogle').onclick=async ()=>{ try{ await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const provider=new firebase.auth.GoogleAuthProvider(); const cred=await firebase.auth().signInWithPopup(provider); const email=(cred.user?.email||'').toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ await firebase.auth().signOut(); alert('Esa cuenta no está autorizada como administrador.'); } }catch(e){ alert('Error con Google: '+e.message);} };
+    document.getElementById('btnLogout').onclick=async ()=>{ try{ await firebase.auth().signOut(); state.isAdmin=false; setTitleCount(); }catch(e){ alert('Error al salir: '+e.message);} };
 
     async function ensureFb(){ if(window.firebase) return; await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js'); }
     function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
