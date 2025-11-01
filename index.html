@@ -3,536 +3,172 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gran Rifa Amaruki — 100 Números (con login)</title>
+  <title>Rifa 100 Números — Amaruki (Login + Tiempo real)</title>
   <style>
-    :root{
-      --bg:#0b1020; --card:#121a33; --muted:#7f8db2; --accent:#3ad1a1; --accent-2:#2bb3ff; --danger:#ff5c7a; --gold:#f3c969;
-    }
+    :root{ --bg:#0b1020; --card:#121a33; --muted:#7f8db2; --accent:#2bb3ff; --accent2:#3ad1a1; --danger:#ff5c7a }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(80vw 80vh at 10% 10%,#0f1835,#090e1e) fixed;color:#e6ecff}
-    header{padding:18px 18px 0}
-    .container{max-width:1200px;margin:0 auto;padding:18px}
-    .app{display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px}
-    @media (max-width:980px){.app{grid-template-columns:1fr}}
-    .card{background:linear-gradient(180deg, rgba(18,26,51,0.9), rgba(10,15,30,0.9));border:1px solid rgba(255,255,255,0.08);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.35)}
-    .card h2{margin:0 0 12px;font-size:20px;letter-spacing:0.2px}
-    .header-card{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0}
-    .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px}
-    .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;padding:16px}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6ecff}
+    .container{max-width:1100px;margin:0 auto;padding:18px}
+    h1{margin:12px 0 6px}
+    .app{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+    @media (max-width:900px){.app{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,rgba(18,26,51,.95),rgba(10,15,30,.95));border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .card h2{margin:0 0 10px}
+    .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;padding:14px}
     @media (max-width:520px){.grid{grid-template-columns:repeat(5,1fr)}}
-    .num{position:relative;isolation:isolate;border-radius:12px;padding:14px 0;text-align:center;font-weight:700;cursor:pointer;user-select:none;border:1px solid rgba(255,255,255,0.08);transition:transform .08s ease, box-shadow .2s ease, border-color .2s ease}
-    .num.available{background:linear-gradient(180deg,rgba(46,214,175,0.12),rgba(46,214,175,0.05));color:#d9fff5}
-    .num.available:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(58,209,161,0.25);border-color:rgba(58,209,161,0.55)}
-    .num.taken{background:linear-gradient(180deg,rgba(255,92,122,0.18),rgba(255,92,122,0.06));color:#ffe6ec;border-color:rgba(255,92,122,0.45)}
-    .num .alias{position:absolute;inset:auto 6px 6px 6px;font-size:10px;color:#ffdfe6;opacity:.85;line-height:1.1}
-
-    .panel{padding:16px;display:flex;flex-direction:column;gap:14px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    input,select,button,textarea{border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:#0c1226;color:#eaf2ff;padding:12px 14px;font-size:14px;outline:none}
-    input:focus,textarea:focus,select:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(43,179,255,0.18)}
-    button{cursor:pointer;border:none;background:linear-gradient(90deg,var(--accent-2),var(--accent));font-weight:700;color:#05121c}
-    button.secondary{background:transparent;color:#dfe8ff;border:1px solid rgba(255,255,255,0.18)}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);font-size:13px;color:#d9e3ff}
-
-    .list{max-height:320px;overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.08)}
-    .row-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px dashed rgba(255,255,255,0.08)}
-    .row-item:last-child{border-bottom:none}
-    .row-item b{letter-spacing:.3px}
-    .muted{color:var(--muted)}
-
-    .prizes{display:grid;grid-template-columns:1fr;gap:8px}
-    .footer-note{font-size:12px;color:var(--muted)}
-    .tag{font-size:12px;padding:6px 8px;border-radius:10px;background:rgba(243,201,105,0.12);border:1px solid rgba(243,201,105,0.4);color:#ffe8b0}
+    .num{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 0;text-align:center;font-weight:700;cursor:pointer;user-select:none}
+    .num.available{background:linear-gradient(180deg,rgba(43,179,255,.12),rgba(43,179,255,.04))}
+    .num.taken{background:linear-gradient(180deg,rgba(255,92,122,.18),rgba(255,92,122,.06));border-color:rgba(255,92,122,.45)}
+    .alias-mini{font-size:10px;opacity:.85}
+    .panel{padding:14px;display:flex;flex-direction:column;gap:12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    input,button,textarea{border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0c1226;color:#eaf2ff;padding:10px 12px}
+    button{cursor:pointer;border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#04121c;font-weight:700}
+    button.secondary{background:transparent;color:#e6ecff;border:1px solid rgba(255,255,255,.18)}
+    .list{max-height:300px;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:12px}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px dashed rgba(255,255,255,.08)}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
     .tiny{font-size:12px;color:var(--muted)}
-
-    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent);margin:4px 0}
-
-    .auth{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .auth .user{display:flex;align-items:center;gap:8px}
-    .avatar{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);object-fit:cover}
+    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent)}
+    .auth{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .avatar{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.18);object-fit:cover}
+    .warn{background:#2a1320;border-color:#b74a62}
   </style>
 </head>
 <body>
-  <header class="container">
-    <h1 style="margin:0;font-size:28px;letter-spacing:.3px">🎉 Gran Rifa Amaruki — 100 Números <span class="tag">Login + Tiempo real</span></h1>
-    <p class="tiny">Necesitas iniciar sesión para reservar números. Con Firebase activado, los cambios aparecen para todos los usuarios al instante.</p>
-  </header>
-
-  <main class="container app">
-    <section class="card">
-      <div class="header-card">
-        <h2>Selecciona un número</h2>
-        <div class="meta">
-          <span class="pill">Disponibles: <b id="availableCount">100</b></span>
-          <span class="pill">Reservados: <b id="takenCount">0</b></span>
-        </div>
-      </div>
-      <div class="grid" id="grid"></div>
-    </section>
-
-    <aside class="card">
-      <div class="panel">
-        <h2>Panel de control</h2>
-
-        <div class="auth">
-          <div class="user" id="userBox" style="display:none">
-            <img id="userPhoto" class="avatar" alt=""/>
-            <div>
-              <div id="userName" style="font-weight:700"></div>
-              <div id="userEmail" class="tiny"></div>
-            </div>
-          </div>
-          <div id="authBox">
+  <div class="container">
+    <h1>🎉 Rifa 100 Números — Amaruki <span class="tiny">(login + tiempo real)</span></h1>
+    <div class="app">
+      <section class="card">
+        <div class="panel" style="padding-bottom:0">
+          <div class="row" style="justify-content:space-between">
+            <h2 style="margin:0">Selecciona un número</h2>
             <div class="row">
-              <input id="email" placeholder="correo@ejemplo.com" style="flex:1"/>
-              <input id="password" type="password" placeholder="Contraseña" style="flex:1"/>
-            </div>
-            <div class="row">
-              <button id="btnLogin">Entrar</button>
-              <button class="secondary" id="btnRegister">Crear cuenta</button>
-              <button class="secondary" id="btnGoogle">Google</button>
+              <span class="pill">Disponibles: <b id="available">100</b></span>
+              <span class="pill">Reservados: <b id="taken">0</b></span>
             </div>
           </div>
-          <button id="btnLogout" class="secondary" style="margin-left:auto;display:none">Salir</button>
         </div>
+        <div class="grid" id="grid"></div>
+      </section>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <input id="alias" placeholder="Tu alias visible (se precarga con tu nombre)" style="flex:1" />
-          <button id="btnQuick">Reservar seleccionado</button>
-        </div>
-        <div class="row">
-          <input id="search" placeholder="Buscar por alias o número…" style="flex:1" />
-          <button class="secondary" id="btnExport" title="Exportar CSV">Exportar CSV</button>
-        </div>
-        <div class="divider"></div>
-
-        <div class="list" id="list"></div>
-
-        <div class="divider"></div>
-        <div>
-          <h3 style="margin:8px 0 6px">🏆 Premios de la Rifa</h3>
-          <div class="prizes">
-            <input id="prize1" placeholder="1° Premio: escribe aquí" />
-            <input id="prize2" placeholder="2° Premio: escribe aquí" />
-            <input id="prize3" placeholder="3° Premio: escribe aquí" />
+      <aside class="card">
+        <div class="panel">
+          <h2>Panel de control</h2>
+          <div class="auth">
+            <div id="userBox" style="display:none;align-items:center;gap:8px">
+              <img id="userPhoto" class="avatar" alt=""/>
+              <div>
+                <div id="userName" style="font-weight:700"></div>
+                <div id="userEmail" class="tiny"></div>
+              </div>
+              <button id="btnLogout" class="secondary" style="margin-left:auto">Salir</button>
+            </div>
+            <div id="authBox">
+              <div class="row"><input id="email" placeholder="correo@ejemplo.com" style="flex:1"><input id="password" type="password" placeholder="Contraseña" style="flex:1"></div>
+              <div class="row"><button id="btnLogin">Entrar</button><button id="btnRegister" class="secondary">Crear cuenta</button><button id="btnGoogle" class="secondary">Google</button></div>
+            </div>
           </div>
-          <p class="tiny">Solo administradores pueden editar premios cuando hay login.</p>
-        </div>
-        <div class="divider"></div>
-        <div class="row">
-          <button id="btnReset" class="secondary" title="Borrar todo">Nueva rifa</button>
-          <button id="btnRelease" class="secondary" title="Liberar número" style="margin-left:auto">Liberar #…</button>
-        </div>
-        <p class="footer-note">Consejo: inicia sesión, escribe tu alias y luego toca un número disponible para reservarlo. Solo el dueño puede liberar su número (o un administrador).</p>
-
-        <details>
-          <summary class="tiny">⚙️ Ajustes de sincronización (Firebase)</summary>
-          <div class="row" style="margin-top:8px">
-            <label class="tiny" style="flex:1 1 100%">Pega tu config de Firebase (Realtime Database + Auth)</label>
-            <textarea id="firebaseConfig" rows="6" placeholder='{
-  "apiKey": "…",
-  "authDomain": "…",
-  "databaseURL": "https://tu-db.europe-west1.firebasedatabase.app",
-  "projectId": "…",
-  "storageBucket": "…",
-  "messagingSenderId": "…",
-  "appId": "…"
-}'></textarea>
-            <button id="btnEnableFb">Habilitar Firebase</button>
+          <div class="divider"></div>
+          <div class="row"><input id="alias" placeholder="Tu alias visible" style="flex:1"><button id="btnQuick">Reservar seleccionado</button></div>
+          <div class="row"><input id="search" placeholder="Buscar alias o número…" style="flex:1"><button id="btnExport" class="secondary">Exportar CSV</button></div>
+          <div class="divider"></div>
+          <div class="list" id="list"></div>
+          <div class="divider"></div>
+          <div>
+            <h3 style="margin:0 0 6px">🏆 Premios</h3>
+            <div class="row"><input id="p1" placeholder="1° Premio" style="flex:1"></div>
+            <div class="row"><input id="p2" placeholder="2° Premio" style="flex:1"></div>
+            <div class="row"><input id="p3" placeholder="3° Premio" style="flex:1"></div>
           </div>
-          <p class="tiny">Con Firebase activo, la app requiere login para reservar/liberar. Puedes usar Email/Password o Google.</p>
-        </details>
-      </div>
-    </aside>
-  </main>
-
-  <template id="tpl-item">
-    <div class="row-item">
-      <div>
-        <b>#<span class="no"></span></b>
-        <span class="muted">—</span>
-        <span class="alias-text"></span>
-        <span class="tiny" style="margin-left:6px;opacity:.8">(<span class="owner"></span>)</span>
-      </div>
-      <div class="row">
-        <button class="secondary btn-free" style="padding:6px 10px">Liberar</button>
-      </div>
+          <div class="divider"></div>
+          <details>
+            <summary class="tiny">⚙️ Ajustes de sincronización (Firebase)</summary>
+            <textarea id="cfg" rows="7" style="width:100%;margin-top:8px">{
+  "apiKey": "AIzaSyAdhD7Lr-xxaaj5WHKUxtJjxwV8kT-ETi4",
+  "authDomain": "rifa-90a26.firebaseapp.com",
+  "databaseURL": "https://rifa-90a26-default-rtdb.firebaseio.com",
+  "projectId": "rifa-90a26",
+  "storageBucket": "rifa-90a26.firebasestorage.app",
+  "messagingSenderId": "42485595611",
+  "appId": "1:42485595611:web:ee2aa2410704a6af573bfe"
+}</textarea>
+            <div class="row"><button id="btnEnable">Habilitar Firebase</button><span class="tiny">Pega aquí tu JSON si necesitas cambiarlo</span></div>
+          </details>
+          <p class="tiny">Debes iniciar sesión para reservar números. Si Firebase no está habilitado, funciona en modo local (sólo en este navegador).</p>
+        </div>
+      </aside>
     </div>
+  </div>
+
+  <template id="tplItem">
+    <div class="item"><div><b>#<span class="no"></span></b> — <span class="alias"></span> <span class="tiny" style="opacity:.8">(<span class="uid"></span>)</span></div><button class="secondary btnFree">Liberar</button></div>
   </template>
 
   <script>
-    // ============================
-    //  Configuración básica
-    // ============================
-    const TOTAL = 100;
-    const ADMIN_EMAILS = [
-      // Agrega aquí correos de administradores
-      // "tucorreo@dominio.com"
-    ];
+    // ===== Estado =====
+    const TOTAL=100; 
+    const state={numbers:{}, prizes:{p1:"",p2:"",p3:""}, backend:'local', fb:{app:null,db:null,auth:null,ref:null}, user:null};
+    const el={grid:by('grid'), list:by('list'), available:by('available'), taken:by('taken'), alias:by('alias'), search:by('search'), p1:by('p1'), p2:by('p2'), p3:by('p3'), tpl:by('tplItem'), email:by('email'), password:by('password'), btnLogin:by('btnLogin'), btnRegister:by('btnRegister'), btnGoogle:by('btnGoogle'), btnLogout:by('btnLogout'), authBox:by('authBox'), userBox:by('userBox'), userName:by('userName'), userEmail:by('userEmail'), userPhoto:by('userPhoto'), btnEnable:by('btnEnable'), cfg:by('cfg'), btnQuick:by('btnQuick'), btnExport:by('btnExport')};
 
-    // Estado
-    const state = {
-      numbers: {}, // { 1: {alias, uid} | null }
-      prizes: { p1:"", p2:"", p3:"" },
-      selectedNumber: null,
-      backend: "local", // "local" | "firebase"
-      fb: { app: null, db: null, ref: null },
-      auth: { user: null, isAdmin: false }
-    };
+    function by(id){return document.getElementById(id)}
 
-    const els = {
-      grid: document.getElementById('grid'),
-      list: document.getElementById('list'),
-      availableCount: document.getElementById('availableCount'),
-      takenCount: document.getElementById('takenCount'),
-      alias: document.getElementById('alias'),
-      btnQuick: document.getElementById('btnQuick'),
-      search: document.getElementById('search'),
-      btnExport: document.getElementById('btnExport'),
-      btnReset: document.getElementById('btnReset'),
-      btnRelease: document.getElementById('btnRelease'),
-      prize1: document.getElementById('prize1'),
-      prize2: document.getElementById('prize2'),
-      prize3: document.getElementById('prize3'),
-      fbCfg: document.getElementById('firebaseConfig'),
-      btnEnableFb: document.getElementById('btnEnableFb'),
-      tplItem: document.getElementById('tpl-item'),
-      // Auth UI
-      email: document.getElementById('email'),
-      password: document.getElementById('password'),
-      btnLogin: document.getElementById('btnLogin'),
-      btnRegister: document.getElementById('btnRegister'),
-      btnGoogle: document.getElementById('btnGoogle'),
-      btnLogout: document.getElementById('btnLogout'),
-      authBox: document.getElementById('authBox'),
-      userBox: document.getElementById('userBox'),
-      userPhoto: document.getElementById('userPhoto'),
-      userName: document.getElementById('userName'),
-      userEmail: document.getElementById('userEmail'),
-    };
+    // ===== Local init =====
+    function build(){const n={};for(let i=1;i<=TOTAL;i++) n[i]=null;return {numbers:n,prizes:{...state.prizes}}}
+    function load(){try{const x=localStorage.getItem('rifa_login_v1');return x?JSON.parse(x):null}catch(e){return null}}
+    function save(){try{localStorage.setItem('rifa_login_v1',JSON.stringify({numbers:state.numbers,prizes:state.prizes}))}catch(e){}}
 
-    // ============================
-    //  Persistencia local
-    // ============================
-    const storageKey = 'rifa100_v2_login';
-    const LocalAdapter = {
-      load(){ try{ const raw = localStorage.getItem(storageKey); return raw? JSON.parse(raw): null; }catch(e){ return null; }},
-      save(snapshot){ try{ localStorage.setItem(storageKey, JSON.stringify(snapshot)); }catch(e){} },
-      subscribe(){ return ()=>{} }
-    };
+    function apply(snap,{silent}={}){state.numbers=snap.numbers||{};state.prizes=snap.prizes||{p1:"",p2:"",p3:""};render(); if(!silent && state.backend==='local') save();}
 
-    // ============================
-    //  Firebase (Auth + RTDB)
-    // ============================
-    let FirebaseAdapter = {
-      async enableFromConfigJson(jsonString){
-        try{
-          const cfg = JSON.parse(jsonString);
-          await ensureFirebase();
-          const app = window.firebase.initializeApp(cfg);
-          const db = window.firebase.database();
-          const auth = window.firebase.auth();
-          const ref = db.ref('rifa100/default');
-          state.backend = 'firebase';
-          state.fb = { app, db, ref, auth };
+    function init(){const x=load(); apply(x||build(),{silent:true}); render();}
 
-          // Inicializar datos si no existen
-          ref.child('snapshot').get().then(snap=>{
-            if(!snap.exists()){
-              ref.child('snapshot').set(buildSnapshot());
-            }
-          });
+    // ===== Render =====
+    function render(){ renderCounts(); renderGrid(); renderList(); el.p1.value=state.prizes.p1||''; el.p2.value=state.prizes.p2||''; el.p3.value=state.prizes.p3||''; }
+    function renderCounts(){const t=Object.values(state.numbers).filter(v=>v).length; el.taken.textContent=t; el.available.textContent=TOTAL-t;}
+    function renderGrid(){ el.grid.innerHTML=''; const term=(el.search.value||'').toLowerCase(); for(let i=1;i<=TOTAL;i++){const v=state.numbers[i]; const d=document.createElement('div'); d.className='num '+(v?'taken':'available'); d.innerHTML=`${i}<div class="alias-mini">${v?escapeHtml(v.alias):''}</div>`; if(term){const m=(''+i).includes(term)|| (v&&v.alias.toLowerCase().includes(term)); d.style.opacity=m?1:.35;} d.onclick=()=>onNumber(i); el.grid.appendChild(d);} }
+    function renderList(){ el.list.innerHTML=''; const frag=document.createDocumentFragment(); Object.entries(state.numbers).filter(([n,v])=>v).sort((a,b)=>a[0]-b[0]).forEach(([no,obj])=>{ const node=el.tpl.content.firstElementChild.cloneNode(true); node.querySelector('.no').textContent=no; node.querySelector('.alias').textContent=obj.alias; node.querySelector('.uid').textContent=(obj.uid||'local').slice(0,6); const can=canRelease(obj); const btn=node.querySelector('.btnFree'); btn.disabled=!can; btn.onclick=()=>release(parseInt(no)); frag.appendChild(node); }); el.list.appendChild(frag); }
 
-          // Suscripción realtime
-          ref.child('snapshot').on('value', (snap)=>{
-            if(snap.exists()) applySnapshot(snap.val(), {silentSave:true});
-          });
+    function onNumber(no){ const cur=state.numbers[no]; if(cur){ if(state.backend==='firebase' && !canRelease(cur)){ alert('Solo el dueño o un admin puede liberar.'); return;} if(confirm(`Liberar #${no}?`)) release(no); return; }
+      const a=(el.alias.value||'').trim(); if(!a){ alert('Escribe tu alias.'); el.alias.focus(); return;} reserve(no,a); }
 
-          // Auth state changes
-          auth.onAuthStateChanged(user=>{
-            state.auth.user = user;
-            state.auth.isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
-            updateAuthUI();
-            // Prefill alias con nombre del usuario
-            if(user && !els.alias.value){ els.alias.value = user.displayName || (user.email? user.email.split('@')[0] : ''); }
-          });
+    function reserve(no,alias){ const uid=state.user?state.user.uid:'local'; const obj={alias,uid}; state.numbers[no]=obj; render(); if(state.backend==='firebase') setNumber(no,obj); else save(); }
+    function release(no){ const cur=state.numbers[no]; if(!cur) return; if(state.backend==='firebase' && !canRelease(cur)) return; state.numbers[no]=null; render(); if(state.backend==='firebase') setNumber(no,null); else save(); }
+    function canRelease(obj){ if(!obj) return false; if(state.user && obj.uid===state.user.uid) return true; return false; }
 
-          // En modo login, premios solo editables por admin
-          setPrizesDisabledIfNeeded();
+    // CSV
+    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'local'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
 
-          return true;
-        }catch(e){ alert('No se pudo habilitar Firebase/Auth. Revisa el JSON.\n'+e); return false; }
-      },
-      // Escrituras granulares para evitar sobrescribir
-      setNumber(no, obj){ if(state.backend==='firebase') state.fb.ref.child(`snapshot/numbers/${no}`).set(obj); },
-      setPrizes(prz){ if(state.backend==='firebase') state.fb.ref.child('snapshot/prizes').set(prz); },
-      resetAll(){ if(state.backend==='firebase') state.fb.ref.child('snapshot').set(buildSnapshot()); }
-    };
+    // Search
+    el.search.addEventListener('input',()=>{renderGrid();renderList();});
+    el.btnQuick.onclick=()=>{ const a=(el.alias.value||'').trim(); if(!a){alert('Escribe tu alias.'); return;} alert('Toca en la cuadrícula el número que quieres.'); };
 
-    async function ensureFirebase(){
-      if(window.firebase) return;
-      await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js');
-    }
+    // ===== Firebase =====
+    el.btnEnable.onclick=enableFb;
+    async function enableFb(){ try{ const cfg=JSON.parse(el.cfg.value.trim()); await ensureFb(); const app=firebase.initializeApp(cfg); const db=firebase.database(); const auth=firebase.auth(); const ref=db.ref('rifa100/default'); state.backend='firebase'; state.fb={app,db,auth,ref}; // init if empty
+      ref.child('snapshot').get().then(s=>{ if(!s.exists()) ref.child('snapshot').set(build()); });
+      ref.child('snapshot').on('value',s=>{ if(s.exists()) apply(s.val(),{silent:true}); render(); });
+      auth.onAuthStateChanged(u=>{ state.user=u||null; updateAuthUI(); if(u && !el.alias.value){ el.alias.value=u.displayName|| (u.email?u.email.split('@')[0]:''); }});
+      alert('Firebase habilitado. Inicia sesión.');
+    }catch(e){ alert('No se pudo habilitar Firebase. Revisa el JSON.\\n'+e); } }
 
-    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+    function setNumber(no,obj){ state.fb.ref.child(`snapshot/numbers/${no}`).set(obj); }
 
-    // ============================
-    //  Lógica base
-    // ============================
-    function buildSnapshot(){
-      const numbers = {}; for(let i=1;i<=TOTAL;i++) numbers[i]=null;
-      return { numbers, prizes: {...state.prizes} };
-    }
-
-    function applySnapshot(snap, opts={}){
-      state.numbers = snap.numbers || {};
-      state.prizes = snap.prizes || {p1:"",p2:"",p3:""};
-      renderAll();
-      if(!opts.silentSave) persist();
-    }
-
-    function persist(){
-      const snapshot = { numbers: state.numbers, prizes: state.prizes };
-      if(state.backend==='firebase'){ /* no full save; granular en acciones */ }
-      else LocalAdapter.save(snapshot);
-    }
-
-    function initFromStorage(){
-      const data = LocalAdapter.load();
-      if(data) applySnapshot(data,{silentSave:true});
-      else applySnapshot(buildSnapshot(),{silentSave:true});
-    }
-
-    // ============================
-    //  Render
-    // ============================
-    function renderAll(){
-      renderGrid();
-      renderList();
-      renderCounts();
-      els.prize1.value = state.prizes.p1 || '';
-      els.prize2.value = state.prizes.p2 || '';
-      els.prize3.value = state.prizes.p3 || '';
-      setPrizesDisabledIfNeeded();
-    }
-
-    function renderCounts(){
-      let taken = Object.values(state.numbers).filter(v=>v).length;
-      els.takenCount.textContent = taken;
-      els.availableCount.textContent = TOTAL - taken;
-    }
-
-    function renderGrid(){
-      els.grid.innerHTML = '';
-      const term = (els.search.value||'').trim().toLowerCase();
-      for(let i=1;i<=TOTAL;i++){
-        const v = state.numbers[i];
-        const el = document.createElement('div');
-        el.className = 'num ' + (v? 'taken':'available');
-        el.dataset.no = i;
-        el.innerHTML = `${i}<div class="alias">${v?escapeHtml(v.alias):''}</div>`;
-        if(term){
-          const match = (''+i).includes(term) || (v && v.alias.toLowerCase().includes(term));
-          el.style.opacity = match? '1':'0.35';
-        }
-        el.onclick = ()=> onNumberClick(i);
-        els.grid.appendChild(el);
-      }
-    }
-
-    function renderList(){
-      els.list.innerHTML = '';
-      const frag = document.createDocumentFragment();
-      const entries = Object.entries(state.numbers).filter(([n,v])=>!!v).sort((a,b)=>a[0]-b[0]);
-      for(const [no,obj] of entries){
-        const node = els.tplItem.content.firstElementChild.cloneNode(true);
-        node.querySelector('.no').textContent = no;
-        node.querySelector('.alias-text').textContent = obj.alias;
-        node.querySelector('.owner').textContent = shortUid(obj.uid);
-        const canRelease = canCurrentUserRelease(obj);
-        node.querySelector('.btn-free').onclick = ()=> releaseNumber(parseInt(no));
-        node.querySelector('.btn-free').disabled = !canRelease;
-        frag.appendChild(node);
-      }
-      els.list.appendChild(frag);
-    }
-
-    function shortUid(uid){ return uid? uid.slice(0,6) : '-'; }
-
-    // ============================
-    //  Autorización y reglas
-    // ============================
-    function userRequired(){
-      if(state.backend==='firebase' && !state.auth.user){
-        alert('Debes iniciar sesión para realizar esta acción.');
-        return false;
-      }
-      return true;
-    }
-
-    function isAdmin(){ return !!state.auth.isAdmin; }
-    function canCurrentUserRelease(obj){
-      if(!obj) return false;
-      if(isAdmin()) return true;
-      const u = state.auth.user; return u && obj.uid === u.uid;
-    }
-
-    // ============================
-    //  Acciones
-    // ============================
-    function onNumberClick(no){
-      state.selectedNumber = no;
-      const current = state.numbers[no];
-      if(current){
-        if(!userRequired()) return;
-        if(canCurrentUserRelease(current)){
-          if(confirm(`El número #${no} está reservado por "${current.alias}". ¿Liberarlo?`)) releaseNumber(no);
-        }else{
-          alert('Solo el dueño del número o un administrador puede liberarlo.');
-        }
-        return;
-      }
-      const alias = (els.alias.value||'').trim();
-      if(!alias){ alert('Escribe tu alias.'); els.alias.focus(); return; }
-      reserveNumber(no, alias);
-    }
-
-    function reserveNumber(no, alias){
-      if(state.numbers[no]) return;
-      if(!userRequired()) return;
-      const uid = state.auth.user? state.auth.user.uid : 'local';
-      const obj = { alias, uid };
-      state.numbers[no] = obj;
-      renderAll();
-      if(state.backend==='firebase') FirebaseAdapter.setNumber(no, obj); else persist();
-    }
-
-    function releaseNumber(no){
-      const cur = state.numbers[no];
-      if(!cur) return;
-      if(state.backend==='firebase' && !canCurrentUserRelease(cur)){ alert('No tienes permisos para liberar este número.'); return; }
-      state.numbers[no] = null;
-      renderAll();
-      if(state.backend==='firebase') FirebaseAdapter.setNumber(no, null); else persist();
-    }
-
-    function exportCSV(){
-      const rows = [["numero","alias","uid"], ...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n, v.alias, v.uid])];
-      const csv = rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'rifa_amaruki.csv'; a.click(); URL.revokeObjectURL(url);
-    }
-
-    function watchPrizeInputs(onChange){
-      const update = ()=>{
-        state.prizes = { p1: els.prize1.value.trim(), p2: els.prize2.value.trim(), p3: els.prize3.value.trim() };
-        if(state.backend==='firebase') FirebaseAdapter.setPrizes(state.prizes); else persist();
-        if(onChange) onChange(state.prizes);
-      };
-      ['input','change'].forEach(ev=>{
-        els.prize1.addEventListener(ev, update);
-        els.prize2.addEventListener(ev, update);
-        els.prize3.addEventListener(ev, update);
-      });
-      update();
-    }
-
-    function setPrizesDisabledIfNeeded(){
-      const disabled = (state.backend==='firebase' && !isAdmin());
-      [els.prize1, els.prize2, els.prize3].forEach(i=> i.disabled = disabled);
-    }
-
-    // ============================
-    //  Utilidades
-    // ============================
-    function escapeHtml(str){ return str.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-
-    function updateAuthUI(){
-      const u = state.auth.user;
-      if(u){
-        els.authBox.style.display = 'none';
-        els.btnLogout.style.display = '';
-        els.userBox.style.display = 'flex';
-        els.userName.textContent = u.displayName || (u.email? u.email.split('@')[0] : '(sin nombre)');
-        els.userEmail.textContent = u.email || '';
-        els.userPhoto.src = u.photoURL || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="%23121a33"/><text x="50%" y="54%" fill="white" font-family="Arial" font-size="22" text-anchor="middle">👤</text></svg>';
-      }else{
-        els.authBox.style.display = '';
-        els.btnLogout.style.display = 'none';
-        els.userBox.style.display = 'none';
-      }
-      setPrizesDisabledIfNeeded();
-    }
-
-    // ============================
-    //  Eventos UI
-    // ============================
-    els.btnQuick.onclick = ()=>{
-      if(state.selectedNumber==null){ alert('Primero toca un número disponible.'); return; }
-      const alias = (els.alias.value||'').trim();
-      if(!alias){ alert('Escribe tu alias.'); els.alias.focus(); return; }
-      if(state.numbers[state.selectedNumber]){ alert('Ese número ya está reservado.'); return; }
-      reserveNumber(state.selectedNumber, alias);
-    };
-
-    els.btnExport.onclick = exportCSV;
-    els.search.addEventListener('input', ()=>{ renderGrid(); renderList(); });
-
-    els.btnReset.onclick = ()=>{
-      if(!confirm('Esto reiniciará toda la rifa. ¿Continuar?')) return;
-      if(state.backend==='firebase') FirebaseAdapter.resetAll();
-      applySnapshot(buildSnapshot());
-    };
-
-    els.btnRelease.onclick = ()=>{
-      const raw = prompt('Ingresa el número a liberar (1-100):');
-      if(!raw) return; const no = parseInt(raw,10); if(isNaN(no)||no<1||no>100){ alert('Número inválido'); return; }
-      const cur = state.numbers[no];
-      if(!cur){ alert('Ese número ya está libre.'); return; }
-      if(state.backend==='firebase' && !canCurrentUserRelease(cur)){ alert('No tienes permisos para liberar este número.'); return; }
-      releaseNumber(no);
-    };
+    function updateAuthUI(){ const u=state.user; if(u){ el.authBox.style.display='none'; el.userBox.style.display='flex'; el.userName.textContent=u.displayName|| (u.email?u.email.split('@')[0]:''); el.userEmail.textContent=u.email||''; el.userPhoto.src=u.photoURL||'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="%23121a33"/><text x="50%" y="54%" fill="white" font-family="Arial" font-size="22" text-anchor="middle">👤</text></svg>'; }
+      else { el.authBox.style.display='block'; el.userBox.style.display='none'; } }
 
     // Auth buttons
-    els.btnEnableFb.onclick = async ()=>{
-      const json = els.fbCfg.value.trim();
-      if(!json){ alert('Pega el JSON de configuración de Firebase.'); return; }
-      const ok = await FirebaseAdapter.enableFromConfigJson(json);
-      if(ok) alert('Firebase habilitado. Auth + Realtime activos.');
-    };
+    el.btnLogin.onclick=async ()=>{ try{ await ensureFb(); await firebase.auth().signInWithEmailAndPassword(el.email.value, el.password.value); }catch(e){ alert('Error al iniciar sesión: '+e.message);} };
+    el.btnRegister.onclick=async ()=>{ try{ await ensureFb(); const cred=await firebase.auth().createUserWithEmailAndPassword(el.email.value, el.password.value); if(cred.user && !cred.user.displayName){ await cred.user.updateProfile({displayName: el.email.value.split('@')[0]}); } }catch(e){ alert('No se pudo crear la cuenta: '+e.message);} };
+    el.btnGoogle.onclick=async ()=>{ try{ await ensureFb(); const provider=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithPopup(provider); }catch(e){ alert('Error con Google: '+e.message);} };
+    el.btnLogout.onclick=async ()=>{ try{ await firebase.auth().signOut(); }catch(e){ alert('Error al salir: '+e.message);} };
 
-    els.btnLogin.onclick = async ()=>{
-      try{
-        await ensureFirebase();
-        await window.firebase.auth().signInWithEmailAndPassword(els.email.value, els.password.value);
-      }catch(e){ alert('Error al iniciar sesión: '+e.message); }
-    };
-    els.btnRegister.onclick = async ()=>{
-      try{
-        await ensureFirebase();
-        const cred = await window.firebase.auth().createUserWithEmailAndPassword(els.email.value, els.password.value);
-        if(cred.user && !cred.user.displayName){ await cred.user.updateProfile({ displayName: els.email.value.split('@')[0] }); }
-      }catch(e){ alert('No se pudo crear la cuenta: '+e.message); }
-    };
-    els.btnGoogle.onclick = async ()=>{
-      try{
-        await ensureFirebase();
-        const provider = new window.firebase.auth.GoogleAuthProvider();
-        await window.firebase.auth().signInWithPopup(provider);
-      }catch(e){ alert('Error con Google: '+e.message); }
-    };
-    els.btnLogout.onclick = async ()=>{
-      try{ await window.firebase.auth().signOut(); }catch(e){ alert('Error al salir: '+e.message); }
-    };
+    async function ensureFb(){ if(window.firebase) return; await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js'); }
+    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 
-    // Iniciar
-    initFromStorage();
-    watchPrizeInputs();
+    function escapeHtml(str){ return str.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+
+    // Boot
+    init();
   </script>
 </body>
 </html>
