@@ -146,7 +146,7 @@
 
     function apply(snap,{silent}={}){state.numbers=snap.numbers||{};state.prizes=snap.prizes||{p1:"",p2:"",p3:""};state.requests=snap.requests||{};render(); if(!silent && state.backend==='local') save();}
 
-    function init(){const x=load(); apply(x||build(),{silent:true}); render();}
+    function init(){ const x=load(); apply(x||build(),{silent:true}); render(); try{ enableFb(); }catch(e){} }
 
     // ===== Notificaciones =====
     function beep(){
