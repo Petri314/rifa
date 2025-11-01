@@ -131,7 +131,6 @@
     // ===== Config rápida =====
     const TOTAL=100; 
     const ADMIN_EMAILS=[
-      // ⚠️ Cambia por tu correo admin real (en minúsculas)
       'hijodenewton3.14@gmail.com'
     ];
     const ADMIN_PIN = '1234'; // Cambia este PIN para abrir el login de admin
@@ -196,7 +195,7 @@
     function getClientId(){ try{ let id=localStorage.getItem('rifa_client_id'); if(!id){ id='c_'+Math.random().toString(36).slice(2,10); localStorage.setItem('rifa_client_id',id);} return id; }catch(e){ return 'client'; } }
 
     // CSV
-    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'admin'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
+    el.btnExport.onclick=()=>{ const rows=[["numero","alias","uid"],...Object.entries(state.numbers).filter(([n,v])=>v).map(([n,v])=>[n,v.alias,v.uid||'admin'])]; const csv=rows.map(r=>r.map(x=>`"${(x+"").replaceAll('"','\"')}"`).join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='rifa.csv'; a.click(); URL.revokeObjectURL(url); };
 
     // Search
     el.search.addEventListener('input',()=>{renderGrid();renderList();});
@@ -221,7 +220,7 @@
       });
       auth.onAuthStateChanged(u=>{ state.user=u||null; const email=(u?.email||'').toLowerCase(); state.isAdmin = !!(u && ADMIN_EMAILS.includes(email)); updateAuthUI(); if(u && !el.alias.value){ el.alias.value=u.displayName|| (u.email?u.email.split('@')[0]:''); }});
       alert('Firebase habilitado. Inicia sesión solo si eres admin.');
-    }catch(e){ alert('No se pudo habilitar Firebase. Revisa el JSON.\\n'+e); } }
+    }catch(e){ alert('No se pudo habilitar Firebase. Revisa el JSON.\n'+e); } }
 
     function setNumber(no,obj){ state.fb.ref.child(`snapshot/numbers/${no}`).set(obj); }
     function setRequest(id,obj){ state.fb.ref.child(`snapshot/requests/${id}`).set(obj); }
@@ -235,8 +234,8 @@
     function toggleAdminSections(){ const sec=document.getElementById('reqSection'); if(sec){ sec.style.display = state.isAdminUI? '' : 'none'; } }
 
     // Auth buttons (sin registro público)
-    document.getElementById('btnLogin').onclick=async ()=>{ try{ await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const email=el.email.value.trim().toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ alert('Correo no autorizado como administrador.'); return;} await firebase.auth().signInWithEmailAndPassword(email, el.password.value); state.isAdminUI=true; toggleAdminSections(); }catch(e){ alert('Error al iniciar sesión: '+e.message);} };
-    document.getElementById('btnGoogle').onclick=async ()=>{ try{ await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const provider=new firebase.auth.GoogleAuthProvider(); const cred=await firebase.auth().signInWithPopup(provider); const email=(cred.user?.email||'').toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ await firebase.auth().signOut(); alert('Esa cuenta no está autorizada como administrador.'); return; } state.isAdminUI=true; toggleAdminSections(); }catch(e){ alert('Error con Google: '+e.message);} };
+    document.getElementById('btnLogin').onclick=async ()=>{ try{ if(!state.fb.app){ await enableFb(); } await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const email=el.email.value.trim().toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ alert('Correo no autorizado como administrador.'); return;} await firebase.auth().signInWithEmailAndPassword(email, el.password.value); state.isAdminUI=true; toggleAdminSections(); }catch(e){ alert('Error al iniciar sesión: '+e.message);} };
+    document.getElementById('btnGoogle').onclick=async ()=>{ try{ if(!state.fb.app){ await enableFb(); } await ensureFb(); if(!state.adminGate){ alert('Solo el admin puede iniciar sesión.'); return; } const provider=new firebase.auth.GoogleAuthProvider(); const cred=await firebase.auth().signInWithPopup(provider); const email=(cred.user?.email||'').toLowerCase(); if(!ADMIN_EMAILS.includes(email)){ await firebase.auth().signOut(); alert('Esa cuenta no está autorizada como administrador.'); return; } state.isAdminUI=true; toggleAdminSections(); }catch(e){ alert('Error con Google: '+e.message);} };
     document.getElementById('btnLogout').onclick=async ()=>{ try{ await firebase.auth().signOut(); state.isAdmin=false; state.isAdminUI=false; toggleAdminSections(); setTitleCount(); }catch(e){ alert('Error al salir: '+e.message);} };
 
     async function ensureFb(){ if(window.firebase) return; await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js'); }
